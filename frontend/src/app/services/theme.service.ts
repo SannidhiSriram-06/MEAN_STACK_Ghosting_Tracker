@@ -1,4 +1,4 @@
-import { Injectable, signal, effect } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 
 export type ThemeMode = 'dark' | 'light';
 
@@ -29,9 +29,41 @@ export class ThemeService {
     });
   }
 
-  toggleTheme(): void {
+  toggleTheme(event?: MouseEvent): void {
     const nextTheme: ThemeMode = this.currentTheme() === 'dark' ? 'light' : 'dark';
-    this.setTheme(nextTheme);
+
+    // Skiper26 inspired View Transitions API circular ripple effect
+    if (typeof document !== 'undefined' && 'startViewTransition' in document) {
+      const x = event?.clientX ?? window.innerWidth / 2;
+      const y = event?.clientY ?? window.innerHeight / 2;
+      const endRadius = Math.hypot(
+        Math.max(x, window.innerWidth - x),
+        Math.max(y, window.innerHeight - y)
+      );
+
+      const transition = (document as any).startViewTransition(() => {
+        this.setTheme(nextTheme);
+      });
+
+      transition.ready.then(() => {
+        const clipPath = [
+          `circle(0px at ${x}px ${y}px)`,
+          `circle(${endRadius}px at ${x}px ${y}px)`
+        ];
+        document.documentElement.animate(
+          {
+            clipPath: nextTheme === 'dark' ? clipPath : clipPath.reverse()
+          },
+          {
+            duration: 500,
+            easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+            pseudoElement: nextTheme === 'dark' ? '::view-transition-old(root)' : '::view-transition-new(root)'
+          }
+        );
+      });
+    } else {
+      this.setTheme(nextTheme);
+    }
   }
 
   setTheme(theme: ThemeMode): void {

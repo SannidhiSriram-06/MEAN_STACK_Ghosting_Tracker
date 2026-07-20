@@ -4,10 +4,20 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from './services/api.service';
 import { AuthService } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
+import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
+
+export interface CommandItem {
+  id: string;
+  category: 'Pages' | 'Actions' | 'Applications';
+  label: string;
+  icon: string;
+  action: () => void;
+}
 
 @Component({
   selector: 'app-root',
-  imports: [CommonModule, FormsModule],
+  standalone: true,
+  imports: [CommonModule, FormsModule, ThemeToggleComponent],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -22,9 +32,10 @@ export class App implements OnInit {
   protected readonly activeTab = signal<'dashboard' | 'kanban' | 'applications' | 'settings' | 'account'>('dashboard');
   protected readonly sidebarCollapsed = signal<boolean>(false);
 
-  // Cmd+K Command Palette State
+  // Cmd+K / Skiper92 Command Palette State
   protected readonly isCmdKOpen = signal<boolean>(false);
   protected cmdKQuery = '';
+  protected readonly cmdKSelectedIndex = signal<number>(0);
 
   // App Data State
   protected readonly applications = signal<any[]>([]);
@@ -91,15 +102,52 @@ export class App implements OnInit {
     }
   }
 
-  // Keyboard shortcut listener for Cmd+K / Ctrl+K & Escape
+  // Keyboard shortcut listener for 'f' / 'F' (Skiper92) and Cmd+K / Ctrl+K & Escape & Arrows
   @HostListener('window:keydown', ['$event'])
   handleGlobalKeydown(event: KeyboardEvent) {
+    const activeEl = document.activeElement;
+    const isTyping = activeEl && (
+      activeEl.tagName === 'INPUT' ||
+      activeEl.tagName === 'TEXTAREA' ||
+      activeEl.tagName === 'SELECT' ||
+      activeEl.getAttribute('contenteditable') === 'true'
+    );
+
+    // Cmd+K / Ctrl+K trigger
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
-      this.isCmdKOpen.update(v => !v);
-      this.cmdKQuery = '';
-    } else if (event.key === 'Escape') {
-      if (this.isCmdKOpen()) this.isCmdKOpen.set(false);
+      this.toggleCmdK();
+      return;
+    }
+
+    // Skiper92 'F' shortcut when NOT typing in an input
+    if (!isTyping && event.key.toLowerCase() === 'f' && !event.metaKey && !event.ctrlKey && !event.altKey) {
+      event.preventDefault();
+      this.toggleCmdK();
+      return;
+    }
+
+    // Command Palette Navigation
+    if (this.isCmdKOpen()) {
+      const items = this.cmdKItems;
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        this.cmdKSelectedIndex.update(idx => (idx + 1) % Math.max(1, items.length));
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        this.cmdKSelectedIndex.update(idx => (idx - 1 + items.length) % Math.max(1, items.length));
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        if (items.length > 0 && items[this.cmdKSelectedIndex()]) {
+          items[this.cmdKSelectedIndex()].action();
+        }
+      } else if (event.key === 'Escape') {
+        this.isCmdKOpen.set(false);
+      }
+      return;
+    }
+
+    if (event.key === 'Escape') {
       if (this.isCreateOpen()) this.closeCreateModal();
       if (this.isDetailOpen()) this.closeDetailModal();
       if (this.isDeleteDataOpen()) this.isDeleteDataOpen.set(false);
@@ -107,7 +155,68 @@ export class App implements OnInit {
     }
   }
 
-  // Command Palette Actions
+  protected toggleCmdK() {
+    this.isCmdKOpen.update(v => !v);
+    this.cmdKQuery = '';
+    this.cmdKSelectedIndex.set(0);
+  }
+
+  // Computed command palette items with Vercel grouping (Skiper92 style)
+  protected get cmdKItems(): CommandItem[] {
+    const query = this.cmdKQuery.trim().toLowerCase();
+    const items: CommandItem[] = [];
+
+    // Pages
+    const pages: CommandItem[] = [
+      { id: 'page-dashboard', category: 'Pages', label: 'Dashboard', icon: 'fa-chart-simple', action: () => this.runCmdKAction('nav', 'dashboard') },
+      { id: 'page-kanban', category: 'Pages', label: 'Kanban Board', icon: 'fa-table-columns', action: () => this.runCmdKAction('nav', 'kanban') },
+      { id: 'page-applications', category: 'Pages', label: 'All Applications', icon: 'fa-list-check', action: () => this.runCmdKAction('nav', 'applications') },
+      { id: 'page-settings', category: 'Pages', label: 'Settings & Integrations', icon: 'fa-gears', action: () => this.runCmdKAction('nav', 'settings') },
+      { id: 'page-account', category: 'Pages', label: 'Account & Data Management', icon: 'fa-user-gear', action: () => this.runCmdKAction('nav', 'account') }
+    ];
+
+    // Actions
+    const actions: CommandItem[] = [
+      { id: 'action-log', category: 'Actions', label: 'Log New Job Application', icon: 'fa-plus', action: () => this.runCmdKAction('create') },
+      { id: 'action-theme', category: 'Actions', label: 'Toggle Light/Dark Theme', icon: 'fa-circle-half-stroke', action: () => this.runCmdKAction('theme') },
+      { id: 'action-ghost', category: 'Actions', label: 'Scan Ghosting Statuses', icon: 'fa-ghost', action: () => { this.isCmdKOpen.set(false); this.triggerGhostCheck(); } },
+      { id: 'action-export-json', category: 'Actions', label: 'Export Applications as JSON', icon: 'fa-file-code', action: () => { this.isCmdKOpen.set(false); this.exportDataJSON(); } },
+      { id: 'action-export-csv', category: 'Actions', label: 'Export Applications as CSV', icon: 'fa-file-csv', action: () => { this.isCmdKOpen.set(false); this.exportDataCSV(); } }
+    ];
+
+    // Filter pages and actions by query
+    pages.forEach(p => {
+      if (!query || p.label.toLowerCase().includes(query)) items.push(p);
+    });
+
+    actions.forEach(a => {
+      if (!query || a.label.toLowerCase().includes(query)) items.push(a);
+    });
+
+    // Applications matching query
+    if (query) {
+      const matchingApps = this.applications().filter(app =>
+        app.company.toLowerCase().includes(query) || app.role.toLowerCase().includes(query)
+      );
+
+      matchingApps.slice(0, 5).forEach(app => {
+        items.push({
+          id: `app-${app._id}`,
+          category: 'Applications',
+          label: `${app.company} — ${app.role} (${app.status})`,
+          icon: 'fa-building',
+          action: () => {
+            this.isCmdKOpen.set(false);
+            this.openDetailModal(app);
+          }
+        });
+      });
+    }
+
+    return items;
+  }
+
+  // Command Palette execution
   protected runCmdKAction(action: string, param?: string) {
     this.isCmdKOpen.set(false);
     this.cmdKQuery = '';
@@ -121,10 +230,6 @@ export class App implements OnInit {
         break;
       case 'theme':
         this.theme.toggleTheme();
-        break;
-      case 'search':
-        this.changeTab('applications');
-        if (param) this.searchQuery.set(param);
         break;
     }
   }
@@ -316,7 +421,7 @@ export class App implements OnInit {
   protected exportDataCSV() {
     const apps = this.applications();
     if (apps.length === 0) return;
-    
+
     const headers = ["Company", "Role", "Status", "Date Applied", "Location", "Source", "Fit Score"];
     const rows = apps.map(a => [
       `"${a.company || ''}"`,
@@ -327,7 +432,7 @@ export class App implements OnInit {
       `"${a.source || ''}"`,
       `"${a.fitScore?.score || ''}"`
     ]);
-    
+
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");

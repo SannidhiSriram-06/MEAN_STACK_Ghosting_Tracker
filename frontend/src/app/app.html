@@ -119,17 +119,18 @@
         </div>
         
         <div class="header-actions">
-          <!-- Cmd+K Shortcut Trigger -->
-          <button class="btn btn-secondary" (click)="isCmdKOpen.set(true)" style="padding: 6px 12px; font-size: 12px;">
+          <!-- Skiper92 Vercel Command Search Trigger -->
+          <button class="btn btn-secondary" (click)="toggleCmdK()" style="padding: 6px 12px; font-size: 12px; gap: 8px;">
             <i class="fa-solid fa-magnifying-glass"></i>
             <span>Search...</span>
-            <kbd style="background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 10px;">⌘K</kbd>
+            <span style="display: flex; gap: 4px;">
+              <kbd style="background: rgba(255,255,255,0.08); padding: 2px 5px; border-radius: 4px; font-size: 10px;">F</kbd>
+              <kbd style="background: rgba(255,255,255,0.08); padding: 2px 5px; border-radius: 4px; font-size: 10px;">⌘K</kbd>
+            </span>
           </button>
 
-          <!-- Light/Dark Mode Toggle -->
-          <button class="btn btn-secondary" (click)="theme.toggleTheme()" style="padding: 6px 10px;" [title]="'Switch to ' + (theme.currentTheme() === 'dark' ? 'Light' : 'Dark') + ' Mode'">
-            <i class="fa-solid" [class.fa-sun]="theme.currentTheme() === 'dark'" [class.fa-moon]="theme.currentTheme() === 'light'"></i>
-          </button>
+          <!-- Skiper4 SVG Morphing Theme Toggle Component -->
+          <app-theme-toggle></app-theme-toggle>
 
           <!-- Subdued AWS Status indicator -->
           <div class="aws-config-status" [class.aws-status-active]="auth.isCognitoConfigured()" [class.aws-status-mock]="!auth.isCognitoConfigured()">
@@ -271,7 +272,6 @@
                     </div>
                   </div>
                 } @empty {
-                  <!-- Minimal Empty State -->
                   <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 160px; color: var(--text-tertiary); text-align: center;">
                     <i class="fa-solid fa-inbox" style="font-size: 20px; margin-bottom: 8px; opacity: 0.4;"></i>
                     <span style="font-size: 12px;">No applications yet</span>
@@ -394,7 +394,7 @@
         </div>
       }
 
-      <!-- VIEW 5: ACCOUNT MANAGEMENT (Phase 4) -->
+      <!-- VIEW 5: ACCOUNT MANAGEMENT -->
       @if (activeTab() === 'account') {
         <div style="display: flex; flex-direction: column; gap: 24px; max-width: 800px;">
           <!-- Export Data Panel -->
@@ -445,49 +445,62 @@
     </main>
   </div>
 
-  <!-- CMD+K COMMAND PALETTE OVERLAY (Phase 2 & 5) -->
+  <!-- SKIPER92 VERCEL COMMAND SEARCH OVERLAY -->
   @if (isCmdKOpen()) {
     <div class="modal-overlay" (click)="isCmdKOpen.set(false)">
-      <div class="modal-content liquid-glass" style="width: 520px; padding: 16px; border-radius: var(--border-radius-lg);" (click)="$event.stopPropagation()">
-        <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle);">
-          <i class="fa-solid fa-magnifying-glass" style="color: var(--text-tertiary);"></i>
-          <input type="text" [(ngModel)]="cmdKQuery" placeholder="Type a command or search company..." style="background: none; border: none; color: var(--text-primary); font-size: 14px; width: 100%; outline: none;">
+      <div class="modal-content liquid-glass vercel-command-dialog" (click)="$event.stopPropagation()">
+        <!-- Command Header Search Input -->
+        <div class="vercel-command-header">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input
+            type="text"
+            [(ngModel)]="cmdKQuery"
+            placeholder="Type a command or search application..."
+            class="vercel-command-input"
+            autofocus
+          >
+          <kbd class="kbd-esc" (click)="isCmdKOpen.set(false)">ESC</kbd>
         </div>
 
-        <div style="max-height: 280px; overflow-y: auto; padding-top: 10px; display: flex; flex-direction: column; gap: 4px;">
-          <div style="font-size: 11px; color: var(--text-tertiary); padding: 4px 8px;">Navigation & Actions</div>
-          
-          <button class="nav-item" (click)="runCmdKAction('nav', 'dashboard')">
-            <i class="fa-solid fa-chart-simple"></i> Go to Dashboard
-          </button>
-          <button class="nav-item" (click)="runCmdKAction('nav', 'kanban')">
-            <i class="fa-solid fa-table-columns"></i> Go to Kanban Board
-          </button>
-          <button class="nav-item" (click)="runCmdKAction('nav', 'applications')">
-            <i class="fa-solid fa-list-check"></i> Go to All Applications
-          </button>
-          <button class="nav-item" (click)="runCmdKAction('create')">
-            <i class="fa-solid fa-plus"></i> Log New Application
-          </button>
-          <button class="nav-item" (click)="runCmdKAction('theme')">
-            <i class="fa-solid fa-circle-half-stroke"></i> Toggle Light/Dark Theme
-          </button>
-          <button class="nav-item" (click)="runCmdKAction('nav', 'account')">
-            <i class="fa-solid fa-user-gear"></i> Go to Account Management
-          </button>
+        <!-- Command List Body -->
+        <div class="vercel-command-body">
+          @for (item of cmdKItems; track item.id; let i = $index) {
+            <!-- Category Header -->
+            @if (i === 0 || cmdKItems[i - 1].category !== item.category) {
+              <div class="vercel-command-category">{{ item.category }}</div>
+            }
 
-          @if (cmdKQuery.trim()) {
-            <div style="font-size: 11px; color: var(--text-tertiary); padding: 8px 8px 4px 8px; border-top: 1px solid var(--border-subtle); margin-top: 6px;">Filter Applications</div>
-            <button class="nav-item" (click)="runCmdKAction('search', cmdKQuery)">
-              <i class="fa-solid fa-building"></i> Filter by "{{ cmdKQuery }}"
-            </button>
+            <!-- Command Item Pill -->
+            <div
+              class="vercel-command-item"
+              [class.is-selected]="cmdKSelectedIndex() === i"
+              (mouseenter)="cmdKSelectedIndex.set(i)"
+              (click)="item.action()"
+            >
+              <div class="item-icon">
+                <i class="fa-solid {{ item.icon }}"></i>
+              </div>
+              <span class="item-label">{{ item.label }}</span>
+              <i class="fa-solid fa-turn-down item-enter" style="transform: rotate(90deg); font-size: 10px; opacity: 0.5;"></i>
+            </div>
+          } @empty {
+            <div style="padding: 30px; text-align: center; color: var(--text-tertiary); font-size: 13px;">
+              No commands or applications matching "{{ cmdKQuery }}".
+            </div>
           }
+        </div>
+
+        <!-- Command Footer Shortcuts -->
+        <div class="vercel-command-footer">
+          <span><kbd>↑</kbd> <kbd>↓</kbd> Navigate</span>
+          <span><kbd>↵</kbd> Select</span>
+          <span><kbd>ESC</kbd> Close</span>
         </div>
       </div>
     </div>
   }
 
-  <!-- DESTRUCTIVE CONFIRMATION MODALS (Phase 4 Liquid Glass) -->
+  <!-- DESTRUCTIVE CONFIRMATION MODALS -->
   @if (isDeleteDataOpen()) {
     <div class="modal-overlay" (click)="isDeleteDataOpen.set(false)">
       <div class="modal-content liquid-glass" (click)="$event.stopPropagation()">
@@ -528,7 +541,7 @@
     </div>
   }
 
-  <!-- LOG APPLICATION MODAL (Full Liquid Glass) -->
+  <!-- LOG APPLICATION MODAL -->
   @if (isCreateOpen()) {
     <div class="modal-overlay" (click)="closeCreateModal()">
       <div class="modal-content liquid-glass" (click)="$event.stopPropagation()">
@@ -584,7 +597,7 @@
     </div>
   }
 
-  <!-- DETAIL SLIDEOVER PANEL (Liquid Glass) -->
+  <!-- DETAIL SLIDEOVER PANEL -->
   @if (isDetailOpen() && selectedApp()) {
     <div class="slideover-overlay" (click)="closeDetailModal()">
       <div class="slideover-content" (click)="$event.stopPropagation()">
