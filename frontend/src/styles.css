@@ -51,6 +51,7 @@
   /* Squircles & Geometry */
   --border-radius: 14px;
   --border-radius-sm: 8px;
+  --border-radius-lg: 20px;
   --border-radius-pill: 99px;
 
   /* Font Stack */
@@ -60,6 +61,9 @@
   --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
   --transition-fast: 150ms var(--ease-smooth);
   --transition-normal: 250ms var(--ease-smooth);
+
+  /* Shadows */
+  --shadow-glass: 0 16px 48px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="light"] {
@@ -258,9 +262,11 @@ body {
 /* Main Content Area */
 .main-content {
   flex: 1;
-  padding: 32px 40px;
   overflow-y: auto;
-  box-sizing: border-box;
+  overflow-x: hidden;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .header-bar {
@@ -470,23 +476,13 @@ body {
   color: var(--text-tertiary);
 }
 
-/* Status Badges */
-.badge {
-  padding: 3px 9px;
-  border-radius: var(--border-radius-pill);
-  font-size: 11px;
-  font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.badge-applied { background: rgba(96, 165, 250, 0.12); color: var(--color-applied); border: 1px solid rgba(96, 165, 250, 0.2); }
-.badge-screening { background: rgba(45, 212, 191, 0.12); color: var(--color-screening); border: 1px solid rgba(45, 212, 191, 0.2); }
-.badge-interview { background: rgba(251, 191, 36, 0.12); color: var(--color-interview); border: 1px solid rgba(251, 191, 36, 0.2); }
-.badge-offer { background: rgba(52, 211, 153, 0.12); color: var(--color-offer); border: 1px solid rgba(52, 211, 153, 0.2); }
-.badge-rejected { background: rgba(248, 113, 113, 0.12); color: var(--color-rejected); border: 1px solid rgba(248, 113, 113, 0.2); }
-.badge-ghosted { background: rgba(148, 163, 184, 0.12); color: var(--color-ghosted); border: 1px solid rgba(148, 163, 184, 0.2); }
+/* Status Pill Badge Colors (used as .pill-badge.pill-{status} in templates) */
+.pill-applied   { background: rgba(96, 165, 250, 0.12); color: var(--color-applied);   border: 1px solid rgba(96, 165, 250, 0.2); }
+.pill-screening { background: rgba(45, 212, 191, 0.12); color: var(--color-screening); border: 1px solid rgba(45, 212, 191, 0.2); }
+.pill-interview { background: rgba(251, 191, 36, 0.12); color: var(--color-interview); border: 1px solid rgba(251, 191, 36, 0.2); }
+.pill-offer     { background: rgba(52, 211, 153, 0.12); color: var(--color-offer);     border: 1px solid rgba(52, 211, 153, 0.2); }
+.pill-rejected  { background: rgba(248, 113, 113, 0.12); color: var(--color-rejected); border: 1px solid rgba(248, 113, 113, 0.2); }
+.pill-ghosted   { background: rgba(148, 163, 184, 0.12); color: var(--color-ghosted);  border: 1px solid rgba(148, 163, 184, 0.2); }
 
 /* Kanban Board */
 .kanban-board {
@@ -634,45 +630,6 @@ body {
   padding: 4px;
 }
 
-/* Auth View */
-.auth-container {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg-base);
-}
-
-.auth-panel {
-  width: 360px;
-  max-width: 90%;
-  padding: 32px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--border-radius);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
-
-.auth-title {
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-.auth-title h2 {
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: var(--text-primary);
-  letter-spacing: -0.02em;
-}
-
-.auth-title p {
-  color: var(--text-secondary);
-  font-size: 13px;
-  margin: 0;
-  font-weight: 400;
-}
 
 /* Skills Tag */
 .skills-list {
@@ -681,84 +638,7 @@ body {
   gap: 6px;
 }
 
-.skill-tag {
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-weight: 500;
-}
 
-.skill-tag-matched {
-  background: rgba(187, 247, 208, 0.12);
-  color: #bbf7d0;
-  border: 1px solid rgba(187, 247, 208, 0.2);
-}
-
-.skill-tag-missing {
-  background: rgba(254, 202, 202, 0.12);
-  color: #fecaca;
-  border: 1px solid rgba(254, 202, 202, 0.2);
-}
-
-/* Timeline */
-.timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  position: relative;
-  padding-left: 18px;
-  margin-top: 10px;
-}
-
-.timeline::before {
-  content: '';
-  position: absolute;
-  left: 4px;
-  top: 6px;
-  bottom: 6px;
-  width: 1px;
-  background: var(--border-subtle);
-}
-
-.timeline-item {
-  position: relative;
-}
-
-.timeline-dot {
-  position: absolute;
-  left: -18px;
-  top: 4px;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--text-tertiary);
-}
-
-.timeline-dot.active {
-  background: var(--accent-primary);
-}
-
-.timeline-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.timeline-header {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.timeline-date {
-  font-size: 11px;
-  color: var(--text-tertiary);
-}
-
-.timeline-reason {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
 
 /* ==========================================================================
    Skiper UI Inspired Enhancements (MEAN Stack Natively)
@@ -877,14 +757,6 @@ body {
   font-size: 11px;
   color: var(--text-tertiary);
   background: rgba(0, 0, 0, 0.2);
-}
-
-.vercel-command-footer kbd {
-  background: rgba(255, 255, 255, 0.08);
-  padding: 1px 5px;
-  border-radius: 3px;
-  font-size: 10px;
-  color: var(--text-secondary);
 }
 
 .vercel-command-footer kbd {
@@ -1057,64 +929,3 @@ body {
   border-color: var(--border-glass);
 }
 
-/* ==========================================================================
-   Skiper57 Vercel Navigation Bar
-   ========================================================================== */
-.vercel-nav-bar {
-  display: flex;
-  flex-direction: column;
-  background: var(--bg-base);
-  border-bottom: 1px solid var(--border-subtle);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  backdrop-filter: blur(16px);
-}
-
-.vercel-nav-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.vercel-nav-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 0 24px;
-  overflow-x: auto;
-}
-
-.vercel-nav-tab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  text-decoration: none;
-  cursor: pointer;
-  position: relative;
-  transition: color 0.15s ease;
-}
-
-.vercel-nav-tab:hover {
-  color: var(--text-primary);
-}
-
-.vercel-nav-tab.active {
-  color: var(--text-primary);
-}
-
-.vercel-nav-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--accent-primary);
-  border-radius: 2px 2px 0 0;
-}

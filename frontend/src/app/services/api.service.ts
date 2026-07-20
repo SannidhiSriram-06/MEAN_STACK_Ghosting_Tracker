@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -22,22 +22,11 @@ export class ApiService {
     return new HttpHeaders();
   }
 
-  getHealth(): Observable<any> {
-    return this.http.get('http://localhost:5001/health');
-  }
-
   getApplications(status?: string, sort?: string): Observable<any[]> {
-    let url = `${this.baseUrl}/applications`;
-    const params: string[] = [];
-    if (status) params.push(`status=${status}`);
-    if (sort) params.push(`sort=${sort}`);
-    if (params.length > 0) url += `?${params.join('&')}`;
-
-    return this.http.get<any[]>(url, { headers: this.getHeaders() });
-  }
-
-  getApplication(id: string): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/applications/${id}`, { headers: this.getHeaders() });
+    let params = new HttpParams();
+    if (status) params = params.set('status', status);
+    if (sort) params = params.set('sort', sort);
+    return this.http.get<any[]>(`${this.baseUrl}/applications`, { headers: this.getHeaders(), params });
   }
 
   createApplication(application: any): Observable<any> {

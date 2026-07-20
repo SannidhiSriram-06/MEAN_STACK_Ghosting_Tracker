@@ -22,7 +22,7 @@ const getStats = async (req, res) => {
 
     // Source distribution
     const sourceGroups = await Application.aggregate([
-      { $match: { userId, source: { $ne: null, $ne: '' } } },
+      { $match: { userId, source: { $nin: [null, ''] } } },
       { $group: { _id: '$source', count: { $sum: 1 } } }
     ]);
 

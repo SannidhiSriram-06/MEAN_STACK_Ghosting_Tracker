@@ -56,29 +56,19 @@ export class AuthService {
    * If Cognito details are set, we simulate authenticating or make actual Cognito calls.
    * Otherwise, we set mock token to proceed with local-first dev.
    */
-  login(email: string, password: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Create mock jwt token
-        const mockToken = 'mock-jwt-header.' + btoa(JSON.stringify({ sub: 'mock-user-123', email })) + '.mock-signature';
-        const user = { name: email.split('@')[0], email };
-
-        localStorage.setItem('token', mockToken);
-        localStorage.setItem('user', JSON.stringify(user));
-
-        this.isAuthenticated.set(true);
-        this.currentUser.set(user);
-        resolve(true);
-      }, 500);
-    });
+  login(email: string, _password: string): Promise<boolean> {
+    // Mock auth: creates a local JWT-shaped token for dev/local mode
+    const mockToken = 'mock-jwt-header.' + btoa(JSON.stringify({ sub: 'mock-user-123', email })) + '.mock-signature';
+    const user = { name: email.split('@')[0], email };
+    localStorage.setItem('token', mockToken);
+    localStorage.setItem('user', JSON.stringify(user));
+    this.isAuthenticated.set(true);
+    this.currentUser.set(user);
+    return Promise.resolve(true);
   }
 
-  signup(email: string, password: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(true); // Mock signup success
-      }, 500);
-    });
+  signup(_email: string, _password: string): Promise<boolean> {
+    return Promise.resolve(true); // Mock signup — real Cognito integration replaces this
   }
 
   logout() {

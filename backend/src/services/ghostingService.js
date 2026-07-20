@@ -45,24 +45,31 @@ async function scanAndFlagGhosted() {
     status: { $in: activeStatuses }
   });
 
-  let updatedCount = 0;
+  // Filter to only those that have exceeded the threshold
+  const toGhost = candidates.filter(app =>
+    isThresholdExceeded(app.lastStatusChange, thresholdDays, referenceDate)
+  );
 
-  for (const app of candidates) {
-    if (isThresholdExceeded(app.lastStatusChange, thresholdDays, referenceDate)) {
-      const oldStatus = app.status;
-      app.status = 'ghosted';
-      app.lastStatusChange = referenceDate;
-      app.statusHistory.push({
-        status: 'ghosted',
-        changedAt: referenceDate,
-        reason: `Auto-ghosted: No update for ${thresholdDays} days (previously '${oldStatus}')`
-      });
-      await app.save();
-      updatedCount++;
+  if (toGhost.length === 0) return 0;
+
+  // Single bulk write instead of N sequential saves
+  await Application.bulkWrite(toGhost.map(app => ({
+    updateOne: {
+      filter: { _id: app._id },
+      update: {
+        $set: { status: 'ghosted', lastStatusChange: referenceDate },
+        $push: {
+          statusHistory: {
+            status: 'ghosted',
+            changedAt: referenceDate,
+            reason: `Auto-ghosted: No update for ${thresholdDays} days (previously '${app.status}')`
+          }
+        }
+      }
     }
-  }
+  })));
 
-  return updatedCount;
+  return toGhost.length;
 }
 
 module.exports = {

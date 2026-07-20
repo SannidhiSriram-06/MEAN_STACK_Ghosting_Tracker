@@ -1,5 +1,5 @@
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
-const fs = require('fs');
+const fs = require('fs/promises');
 const path = require('path');
 
 const isS3Enabled = process.env.S3_BUCKET_NAME && 
@@ -50,15 +50,13 @@ async function uploadResume(file, userId) {
   } else {
     // Local storage fallback
     const uploadDir = path.join(__dirname, '../../uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    await fs.mkdir(uploadDir, { recursive: true }); // recursive is idempotent — no existsSync needed
     
     const localFileName = `${Date.now()}-${file.originalname}`;
     const localFilePath = path.join(uploadDir, localFileName);
     
-    // Write file from buffer
-    fs.writeFileSync(localFilePath, file.buffer);
+    // Write file from buffer asynchronously
+    await fs.writeFile(localFilePath, file.buffer);
     
     return {
       storageType: 'local',

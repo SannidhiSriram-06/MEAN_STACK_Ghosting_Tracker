@@ -26,7 +26,6 @@ export class App implements OnInit {
   protected readonly api = inject(ApiService);
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
-  protected readonly Math = Math;
 
   // Navigation & View Tabs
   protected readonly activeTab = signal<'dashboard' | 'kanban' | 'applications' | 'settings' | 'account'>('dashboard');
@@ -67,16 +66,19 @@ export class App implements OnInit {
   protected deleteConfirmText = '';
   protected deleteError = '';
 
-  // Form Models
-  protected newApp = {
-    company: '',
-    role: '',
-    jobDescription: '',
-    dateApplied: new Date().toISOString().split('T')[0],
-    location: '',
-    source: 'LinkedIn',
-    notes: ''
-  };
+  // Form Models — defined via factory to allow clean resets
+  private getDefaultApp() {
+    return {
+      company: '',
+      role: '',
+      jobDescription: '',
+      dateApplied: new Date().toISOString().split('T')[0],
+      location: '',
+      source: 'LinkedIn',
+      notes: ''
+    };
+  }
+  protected newApp = this.getDefaultApp();
 
   // Auth Page Form Models
   protected authMode = signal<'login' | 'signup'>('login');
@@ -298,8 +300,7 @@ export class App implements OnInit {
 
   protected getMaxStatusCount(): number {
     const s = this.stats().byStatus || {};
-    const counts = [s.applied || 0, s.screening || 0, s.interview || 0, s.offer || 0, s.rejected || 0, s.ghosted || 0];
-    return Math.max(...counts, 1);
+    return Math.max(s.applied||0, s.screening||0, s.interview||0, s.offer||0, s.rejected||0, s.ghosted||0, 1);
   }
 
   protected getBarHeight(count: number): number {
@@ -336,15 +337,7 @@ export class App implements OnInit {
     this.api.createApplication(this.newApp).subscribe({
       next: () => {
         this.closeCreateModal();
-        this.newApp = {
-          company: '',
-          role: '',
-          jobDescription: '',
-          dateApplied: new Date().toISOString().split('T')[0],
-          location: '',
-          source: 'LinkedIn',
-          notes: ''
-        };
+        this.newApp = this.getDefaultApp();
         this.loadAllData();
       },
       error: (err) => console.error('Failed to create application:', err)
@@ -376,9 +369,13 @@ export class App implements OnInit {
     const payload = this.usePastedText ? { cvText: this.pastedCvText } : {};
 
     this.api.runFitScore(id, payload).subscribe({
-      next: (res) => {
+      next: (fitScore) => {
         this.runningFitCheck.set(false);
-        this.selectedApp.set(res.application);
+        // API returns app.fitScore directly — patch it onto selectedApp
+        const current = this.selectedApp();
+        if (current) {
+          this.selectedApp.set({ ...current, fitScore });
+        }
         this.loadAllData();
       },
       error: (err) => {
@@ -502,16 +499,17 @@ export class App implements OnInit {
     });
   }
 
+  // Load Cognito config from auth service (uses canonical snake_case localStorage keys)
   protected loadCognitoConfig() {
-    this.cognitoUserPoolId = localStorage.getItem('cognitoUserPoolId') || '';
-    this.cognitoClientId = localStorage.getItem('cognitoClientId') || '';
-    this.cognitoRegion = localStorage.getItem('cognitoRegion') || 'us-east-1';
+    const config = this.auth.getCognitoConfig();
+    this.cognitoUserPoolId = config.userPoolId;
+    this.cognitoClientId = config.clientId;
+    this.cognitoRegion = config.region;
   }
 
+  // Delegate save to auth service — single source of truth for key naming
   protected saveCognitoConfig() {
-    localStorage.setItem('cognitoUserPoolId', this.cognitoUserPoolId);
-    localStorage.setItem('cognitoClientId', this.cognitoClientId);
-    localStorage.setItem('cognitoRegion', this.cognitoRegion);
+    this.auth.saveCognitoConfig(this.cognitoUserPoolId, this.cognitoClientId, this.cognitoRegion);
     alert('Cognito parameters saved locally!');
   }
 }

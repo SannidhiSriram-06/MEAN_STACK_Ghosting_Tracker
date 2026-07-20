@@ -5,11 +5,7 @@ const configSchema = new mongoose.Schema({
     type: Number,
     required: true,
     default: 21
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
   }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Config', configSchema);

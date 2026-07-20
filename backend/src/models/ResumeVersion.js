@@ -21,11 +21,7 @@ const resumeVersionSchema = new mongoose.Schema({
   extractedText: {
     type: String,
     default: ''
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
   }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('ResumeVersion', resumeVersionSchema);

@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cron = require('node-cron');
+const path = require('path');
 require('dotenv').config();
 
 const { scanAndFlagGhosted } = require('./services/ghostingService');
@@ -17,7 +18,6 @@ app.use(cors());
 app.use(express.json());
 
 // Serving uploaded files locally if local storage mode is active
-const path = require('path');
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Routes
