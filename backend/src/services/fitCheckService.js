@@ -123,17 +123,10 @@ You MUST return ONLY a JSON response in the following schema:
 
     const responseContent = completion.choices[0].message.content;
     let parsedResult;
-
     try {
       parsedResult = JSON.parse(responseContent);
     } catch (e) {
-      // Regex recovery if JSON format type failed or returned wrappers
-      const jsonMatch = responseContent.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        parsedResult = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('Unable to extract valid JSON structure from LLM response.');
-      }
+      throw new Error('Unable to parse JSON structure from LLM response.');
     }
 
     // Defensive parsing & validation of required fields

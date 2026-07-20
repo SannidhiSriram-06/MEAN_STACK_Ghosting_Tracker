@@ -246,8 +246,17 @@ const runFitScore = async (req, res) => {
   }
 };
 
+// Helper function to wipe all application and resume data for a user
+async function wipeUserAppData(userId) {
+  const deletedApps = await Application.deleteMany({ userId });
+  const deletedResumes = await ResumeVersion.deleteMany({ userId });
+  return {
+    deletedApplicationsCount: deletedApps.deletedCount,
+    deletedResumesCount: deletedResumes.deletedCount
+  };
+}
+
 router.post('/:id/fit-score', runFitScore);
-router.post('/:id/fit-check', runFitScore); // Support alias
 
 /**
  * POST /api/applications/upload-resume
@@ -319,13 +328,11 @@ router.get('/resumes/list', async (req, res) => {
 router.delete('/users/me/data', async (req, res) => {
   try {
     const userId = req.user.id;
-    const deletedApps = await Application.deleteMany({ userId });
-    const deletedResumes = await ResumeVersion.deleteMany({ userId });
+    const stats = await wipeUserAppData(userId);
     
     res.json({
       message: 'All application data wiped successfully',
-      deletedApplicationsCount: deletedApps.deletedCount,
-      deletedResumesCount: deletedResumes.deletedCount
+      ...stats
     });
   } catch (error) {
     console.error('Failed to wipe user data:', error);
@@ -340,8 +347,7 @@ router.delete('/users/me/data', async (req, res) => {
 router.delete('/users/me', async (req, res) => {
   try {
     const userId = req.user.id;
-    await Application.deleteMany({ userId });
-    await ResumeVersion.deleteMany({ userId });
+    await wipeUserAppData(userId);
     
     res.json({
       message: 'User account and all data deleted successfully'

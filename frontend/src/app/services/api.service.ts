@@ -50,7 +50,7 @@ export class ApiService {
   }
 
   uploadResume(formData: FormData): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/applications/resumes/upload`, formData, { headers: this.getHeaders() });
+    return this.http.post<any>(`${this.baseUrl}/applications/upload-resume`, formData, { headers: this.getHeaders() });
   }
 
   getResumes(): Observable<any[]> {

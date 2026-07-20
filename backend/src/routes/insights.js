@@ -111,7 +111,6 @@ const getStats = async (req, res) => {
 };
 
 router.get('/stats', getStats);
-router.get('/', getStats); // Alias for base path
 
 /**
  * GET /api/insights/skill-gap (and alias GET /api/insights/skill-gap)

@@ -30,7 +30,6 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/applications', applicationsRouter);
-app.use('/api/stats', insightsRouter);
 app.use('/api/insights', insightsRouter);
 
 // Daily scheduled cron job (runs every day at midnight '0 0 * * *')
