@@ -312,4 +312,44 @@ router.get('/resumes/list', async (req, res) => {
   }
 });
 
+/**
+ * DELETE /api/applications/users/me/data
+ * Wipes all Application and ResumeVersion records for the authenticated user.
+ */
+router.delete('/users/me/data', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const deletedApps = await Application.deleteMany({ userId });
+    const deletedResumes = await ResumeVersion.deleteMany({ userId });
+    
+    res.json({
+      message: 'All application data wiped successfully',
+      deletedApplicationsCount: deletedApps.deletedCount,
+      deletedResumesCount: deletedResumes.deletedCount
+    });
+  } catch (error) {
+    console.error('Failed to wipe user data:', error);
+    res.status(500).json({ error: 'Server error wiping user data' });
+  }
+});
+
+/**
+ * DELETE /api/applications/users/me
+ * Full account deletion: wipes all application/resume documents for the user.
+ */
+router.delete('/users/me', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    await Application.deleteMany({ userId });
+    await ResumeVersion.deleteMany({ userId });
+    
+    res.json({
+      message: 'User account and all data deleted successfully'
+    });
+  } catch (error) {
+    console.error('Failed to delete user account:', error);
+    res.status(500).json({ error: 'Server error deleting account' });
+  }
+});
+
 module.exports = router;

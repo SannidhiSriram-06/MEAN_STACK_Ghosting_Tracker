@@ -1,8 +1,9 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from './services/api.service';
 import { AuthService } from './services/auth.service';
+import { ThemeService } from './services/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -14,10 +15,16 @@ export class App implements OnInit {
   // Services
   protected readonly api = inject(ApiService);
   protected readonly auth = inject(AuthService);
+  protected readonly theme = inject(ThemeService);
   protected readonly Math = Math;
 
-  // Active View Tab
-  protected readonly activeTab = signal<'dashboard' | 'kanban' | 'applications' | 'settings'>('dashboard');
+  // Navigation & View Tabs
+  protected readonly activeTab = signal<'dashboard' | 'kanban' | 'applications' | 'settings' | 'account'>('dashboard');
+  protected readonly sidebarCollapsed = signal<boolean>(false);
+
+  // Cmd+K Command Palette State
+  protected readonly isCmdKOpen = signal<boolean>(false);
+  protected cmdKQuery = '';
 
   // App Data State
   protected readonly applications = signal<any[]>([]);
@@ -42,6 +49,12 @@ export class App implements OnInit {
   protected readonly isDetailOpen = signal<boolean>(false);
   protected readonly selectedApp = signal<any>(null);
   protected readonly runningFitCheck = signal<boolean>(false);
+
+  // Destructive Modals State (Phase 4)
+  protected readonly isDeleteDataOpen = signal<boolean>(false);
+  protected readonly isDeleteAccountOpen = signal<boolean>(false);
+  protected deleteConfirmText = '';
+  protected deleteError = '';
 
   // Form Models
   protected newApp = {
@@ -73,8 +86,53 @@ export class App implements OnInit {
   protected fileUploadStatus = '';
 
   ngOnInit() {
-    // If not authenticated, we stay in Auth screen (handled in HTML)
     if (this.auth.isAuthenticated()) {
+      this.loadAllData();
+    }
+  }
+
+  // Keyboard shortcut listener for Cmd+K / Ctrl+K & Escape
+  @HostListener('window:keydown', ['$event'])
+  handleGlobalKeydown(event: KeyboardEvent) {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      this.isCmdKOpen.update(v => !v);
+      this.cmdKQuery = '';
+    } else if (event.key === 'Escape') {
+      if (this.isCmdKOpen()) this.isCmdKOpen.set(false);
+      if (this.isCreateOpen()) this.closeCreateModal();
+      if (this.isDetailOpen()) this.closeDetailModal();
+      if (this.isDeleteDataOpen()) this.isDeleteDataOpen.set(false);
+      if (this.isDeleteAccountOpen()) this.isDeleteAccountOpen.set(false);
+    }
+  }
+
+  // Command Palette Actions
+  protected runCmdKAction(action: string, param?: string) {
+    this.isCmdKOpen.set(false);
+    this.cmdKQuery = '';
+
+    switch (action) {
+      case 'nav':
+        if (param) this.changeTab(param as any);
+        break;
+      case 'create':
+        this.openCreateModal();
+        break;
+      case 'theme':
+        this.theme.toggleTheme();
+        break;
+      case 'search':
+        this.changeTab('applications');
+        if (param) this.searchQuery.set(param);
+        break;
+    }
+  }
+
+  // Tab Navigation Helper
+  protected changeTab(tab: 'dashboard' | 'kanban' | 'applications' | 'settings' | 'account') {
+    this.activeTab.set(tab);
+    if (tab === 'dashboard' || tab === 'applications' || tab === 'kanban') {
       this.loadAllData();
     }
   }
@@ -115,46 +173,52 @@ export class App implements OnInit {
     });
   }
 
-  // Navigation handlers
-  protected changeTab(tab: 'dashboard' | 'kanban' | 'applications' | 'settings') {
-    this.activeTab.set(tab);
-    if (this.auth.isAuthenticated()) {
-      this.loadAllData();
-    }
-  }
-
-  // Filtered Applications for applications tab
-  protected getFilteredApplications() {
-    const query = this.searchQuery().toLowerCase().trim();
-    const status = this.selectedStatusFilter();
-
+  // Helper getters
+  protected get filteredApplications() {
     return this.applications().filter(app => {
-      const matchSearch = app.company.toLowerCase().includes(query) || 
-                          app.role.toLowerCase().includes(query) || 
-                          (app.location && app.location.toLowerCase().includes(query));
-      
-      const matchStatus = status === 'all' || app.status === status;
-      
-      return matchSearch && matchStatus;
+      const matchesSearch = !this.searchQuery() ||
+        app.company.toLowerCase().includes(this.searchQuery().toLowerCase()) ||
+        app.role.toLowerCase().includes(this.searchQuery().toLowerCase());
+
+      const matchesStatus = this.selectedStatusFilter() === 'all' || app.status === this.selectedStatusFilter();
+
+      return matchesSearch && matchesStatus;
     });
   }
 
-  // Split applications by status for Kanban Board
-  protected getKanbanApplications(status: string) {
+  protected getApplicationsByStatus(status: string) {
     return this.applications().filter(app => app.status === status);
   }
 
-  // Application CRUD handlers
+  protected getMaxStatusCount(): number {
+    const s = this.stats().byStatus || {};
+    const counts = [s.applied || 0, s.screening || 0, s.interview || 0, s.offer || 0, s.rejected || 0, s.ghosted || 0];
+    return Math.max(...counts, 1);
+  }
+
+  protected getBarHeight(count: number): number {
+    const max = this.getMaxStatusCount();
+    return Math.max(12, Math.round((count / max) * 160));
+  }
+
+  // Actions
+  protected handleAuthSubmit() {
+    this.authError = '';
+    if (this.authMode() === 'login') {
+      this.auth.login(this.authEmail, this.authPassword)
+        .then(() => this.loadAllData())
+        .catch((err: any) => this.authError = err?.message || 'Login failed');
+    } else {
+      this.auth.signup(this.authEmail, this.authPassword)
+        .then(() => {
+          this.authMode.set('login');
+          this.handleAuthSubmit();
+        })
+        .catch((err: any) => this.authError = err?.message || 'Registration failed');
+    }
+  }
+
   protected openCreateModal() {
-    this.newApp = {
-      company: '',
-      role: '',
-      jobDescription: '',
-      dateApplied: new Date().toISOString().split('T')[0],
-      location: '',
-      source: 'LinkedIn',
-      notes: ''
-    };
     this.isCreateOpen.set(true);
   }
 
@@ -162,20 +226,27 @@ export class App implements OnInit {
     this.isCreateOpen.set(false);
   }
 
-  protected createApplication() {
+  protected createApplicationSubmit() {
     this.api.createApplication(this.newApp).subscribe({
       next: () => {
-        this.loadAllData();
         this.closeCreateModal();
+        this.newApp = {
+          company: '',
+          role: '',
+          jobDescription: '',
+          dateApplied: new Date().toISOString().split('T')[0],
+          location: '',
+          source: 'LinkedIn',
+          notes: ''
+        };
+        this.loadAllData();
       },
-      error: (err) => alert(err.error?.error || 'Failed to create application')
+      error: (err) => console.error('Failed to create application:', err)
     });
   }
 
-  protected viewApplication(app: any) {
+  protected openDetailModal(app: any) {
     this.selectedApp.set(app);
-    this.pastedCvText = '';
-    this.usePastedText = false;
     this.isDetailOpen.set(true);
   }
 
@@ -184,163 +255,157 @@ export class App implements OnInit {
     this.selectedApp.set(null);
   }
 
-  protected updateAppStatus(appId: string, newStatus: string) {
-    this.api.updateApplication(appId, { status: newStatus }).subscribe({
+  protected updateAppStatus(id: string, newStatus: string) {
+    this.api.updateApplication(id, { status: newStatus }).subscribe({
       next: (updated) => {
+        this.selectedApp.set(updated);
         this.loadAllData();
-        if (this.selectedApp() && this.selectedApp()._id === appId) {
-          this.selectedApp.set(updated);
-        }
       },
-      error: (err) => alert(err.error?.error || 'Failed to update status')
+      error: (err) => console.error('Failed to update status:', err)
     });
   }
 
-  protected deleteApplication(appId: string) {
+  protected triggerFitCheck(id: string) {
+    this.runningFitCheck.set(true);
+    const payload = this.usePastedText ? { cvText: this.pastedCvText } : {};
+
+    this.api.runFitScore(id, payload).subscribe({
+      next: (res) => {
+        this.runningFitCheck.set(false);
+        this.selectedApp.set(res.application);
+        this.loadAllData();
+      },
+      error: (err) => {
+        this.runningFitCheck.set(false);
+        console.error('Fit check error:', err);
+      }
+    });
+  }
+
+  protected triggerGhostCheck() {
+    this.api.checkGhosting().subscribe({
+      next: (res) => {
+        alert(res.message || 'Ghosting scan complete');
+        this.loadAllData();
+      },
+      error: (err) => console.error('Ghost check error:', err)
+    });
+  }
+
+  protected deleteApplication(id: string) {
     if (confirm('Are you sure you want to delete this application?')) {
-      this.api.deleteApplication(appId).subscribe({
+      this.api.deleteApplication(id).subscribe({
         next: () => {
           this.closeDetailModal();
           this.loadAllData();
         },
-        error: (err) => alert(err.error?.error || 'Failed to delete application')
+        error: (err) => console.error('Failed to delete app:', err)
       });
     }
   }
 
-  // Ghosting scan manual trigger
-  protected triggerGhostScan() {
-    this.api.checkGhosting().subscribe({
-      next: (res) => {
-        alert(`Scan completed successfully! ${res.updatedCount} applications flagged as ghosted.`);
-        this.loadAllData();
-      },
-      error: (err) => alert(err.error?.error || 'Failed to run scan')
-    });
+  // Account & Export Actions (Phase 4)
+  protected exportDataJSON() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.applications(), null, 2));
+    const dlAnchorElem = document.createElement('a');
+    dlAnchorElem.setAttribute("href", dataStr);
+    dlAnchorElem.setAttribute("download", `jobtrack_applications_${new Date().toISOString().split('T')[0]}.json`);
+    dlAnchorElem.click();
   }
 
-  // File selection
-  protected onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.selectedFile = file;
-    }
-  }
-
-  // Upload Resume handler
-  protected uploadResume() {
-    if (!this.selectedFile) return;
-    this.uploadingResume.set(true);
-    this.fileUploadStatus = 'Uploading and parsing CV... Please wait...';
-
-    this.api.uploadResume(this.selectedFile).subscribe({
-      next: (res) => {
-        this.fileUploadStatus = 'Upload successful! Text extracted.';
-        this.selectedFile = null;
-        this.loadResumes();
-        this.uploadingResume.set(false);
-      },
-      error: (err) => {
-        this.fileUploadStatus = 'Upload failed: ' + (err.error?.error || 'Unknown error');
-        this.uploadingResume.set(false);
-      }
-    });
-  }
-
-  // Fit Scoring Trigger
-  protected triggerFitCheck(appId: string) {
-    this.runningFitCheck.set(true);
+  protected exportDataCSV() {
+    const apps = this.applications();
+    if (apps.length === 0) return;
     
-    // Choose input method
-    const payload: { cvText?: string; resumeId?: string } = {};
-    if (this.usePastedText) {
-      if (!this.pastedCvText.trim()) {
-        alert('Please paste CV text.');
-        this.runningFitCheck.set(false);
-        return;
-      }
-      payload.cvText = this.pastedCvText;
-    } else {
-      // Find selected resume (uses latest if empty)
-      const selectElement = document.getElementById('resumeSelect') as HTMLSelectElement;
-      if (selectElement && selectElement.value) {
-        payload.resumeId = selectElement.value;
-      }
-    }
-
-    this.api.runFitScore(appId, payload).subscribe({
-      next: (fitCheckResult) => {
-        this.runningFitCheck.set(false);
-        // Refresh detail app view to load newly cached score
-        this.api.getApplication(appId).subscribe({
-          next: (updatedApp) => {
-            this.selectedApp.set(updatedApp);
-            this.loadAllData();
-          }
-        });
-      },
-      error: (err) => {
-        alert('Fit Check failed: ' + (err.error?.error || 'Server error'));
-        this.runningFitCheck.set(false);
-      }
-    });
+    const headers = ["Company", "Role", "Status", "Date Applied", "Location", "Source", "Fit Score"];
+    const rows = apps.map(a => [
+      `"${a.company || ''}"`,
+      `"${a.role || ''}"`,
+      `"${a.status || ''}"`,
+      `"${a.dateApplied ? new Date(a.dateApplied).toISOString().split('T')[0] : ''}"`,
+      `"${a.location || ''}"`,
+      `"${a.source || ''}"`,
+      `"${a.fitScore?.score || ''}"`
+    ]);
+    
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `jobtrack_applications_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
-  // Auth Operations
-  protected handleAuthSubmit() {
-    this.authError = '';
-    if (!this.authEmail || !this.authPassword) {
-      this.authError = 'Email and password are required.';
+  protected wipeUserDataSubmit() {
+    if (this.deleteConfirmText !== 'DELETE') {
+      this.deleteError = 'Please type DELETE exactly to confirm.';
       return;
     }
-
-    if (this.authMode() === 'login') {
-      this.auth.login(this.authEmail, this.authPassword).then(() => {
+    this.api.deleteUserData().subscribe({
+      next: () => {
+        this.isDeleteDataOpen.set(false);
+        this.deleteConfirmText = '';
+        this.deleteError = '';
         this.loadAllData();
-      });
-    } else {
-      this.auth.signup(this.authEmail, this.authPassword).then((success) => {
-        if (success) {
-          this.authMode.set('login');
-          alert('Sign up successful! Please log in.');
-        } else {
-          this.authError = 'Sign up failed.';
-        }
-      });
+      },
+      error: (err) => this.deleteError = err.error?.error || 'Failed to wipe data.'
+    });
+  }
+
+  protected wipeAccountSubmit() {
+    if (this.deleteConfirmText !== 'DELETE') {
+      this.deleteError = 'Please type DELETE exactly to confirm.';
+      return;
     }
+    this.api.deleteAccount().subscribe({
+      next: () => {
+        this.isDeleteAccountOpen.set(false);
+        this.deleteConfirmText = '';
+        this.deleteError = '';
+        this.auth.logout();
+      },
+      error: (err) => this.deleteError = err.error?.error || 'Failed to delete account.'
+    });
   }
 
-  protected handleLogout() {
-    this.auth.logout();
-    this.applications.set([]);
+  // File Upload Handlers
+  protected onFileSelected(event: any) {
+    this.selectedFile = event.target.files[0] || null;
   }
 
-  // Cognito Configuration Page handler
+  protected uploadSelectedResume() {
+    if (!this.selectedFile) return;
+    this.uploadingResume.set(true);
+    const formData = new FormData();
+    formData.append('resume', this.selectedFile);
+
+    this.api.uploadResume(formData).subscribe({
+      next: (res) => {
+        this.uploadingResume.set(false);
+        this.fileUploadStatus = 'Resume uploaded successfully!';
+        this.selectedFile = null;
+        this.loadResumes();
+      },
+      error: (err) => {
+        this.uploadingResume.set(false);
+        this.fileUploadStatus = 'Upload failed.';
+        console.error('Resume upload error:', err);
+      }
+    });
+  }
+
   protected loadCognitoConfig() {
-    const config = this.auth.getCognitoConfig();
-    this.cognitoUserPoolId = config.userPoolId;
-    this.cognitoClientId = config.clientId;
-    this.cognitoRegion = config.region;
+    this.cognitoUserPoolId = localStorage.getItem('cognitoUserPoolId') || '';
+    this.cognitoClientId = localStorage.getItem('cognitoClientId') || '';
+    this.cognitoRegion = localStorage.getItem('cognitoRegion') || 'us-east-1';
   }
 
   protected saveCognitoConfig() {
-    this.auth.saveCognitoConfig(this.cognitoUserPoolId, this.cognitoClientId, this.cognitoRegion);
-    alert('Cognito parameters saved. If values were provided, JWT claims will be sent in subsequent requests.');
-  }
-
-  protected formatSourceLabel(source: any): string {
-    if (!source) return 'Unknown';
-    const str = String(source);
-    return str.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
-  }
-
-  protected getMaxStatusCount(): number {
-    const s = this.stats().byStatus;
-    return Math.max(1, s.applied || 0, s.screening || 0, s.interview || 0, s.offer || 0, s.rejected || 0, s.ghosted || 0);
-  }
-
-  protected getBarHeight(count: number): number {
-    const max = this.getMaxStatusCount();
-    return (count / max) * 140; // Max height in SVG coordinate system is 140
+    localStorage.setItem('cognitoUserPoolId', this.cognitoUserPoolId);
+    localStorage.setItem('cognitoClientId', this.cognitoClientId);
+    localStorage.setItem('cognitoRegion', this.cognitoRegion);
+    alert('Cognito parameters saved locally!');
   }
 }

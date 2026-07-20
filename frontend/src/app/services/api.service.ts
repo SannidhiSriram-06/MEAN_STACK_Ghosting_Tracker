@@ -60,14 +60,20 @@ export class ApiService {
     return this.http.post<any>(`${this.baseUrl}/applications/${id}/fit-score`, payload, { headers: this.getHeaders() });
   }
 
-  uploadResume(file: File): Observable<any> {
-    const formData = new FormData();
-    formData.append('resume', file);
-    return this.http.post<any>(`${this.baseUrl}/applications/upload-resume`, formData, { headers: this.getHeaders() });
+  uploadResume(formData: FormData): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/applications/resumes/upload`, formData, { headers: this.getHeaders() });
   }
 
   getResumes(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/applications/resumes/list`, { headers: this.getHeaders() });
+  }
+
+  deleteUserData(): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/applications/users/me/data`, { headers: this.getHeaders() });
+  }
+
+  deleteAccount(): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/applications/users/me`, { headers: this.getHeaders() });
   }
 
   getStats(): Observable<any> {

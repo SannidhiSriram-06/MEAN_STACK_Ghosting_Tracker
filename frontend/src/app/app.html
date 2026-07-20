@@ -8,40 +8,40 @@
       </div>
 
       @if (authError) {
-        <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 8px; font-size: 13px; color: #f87171; margin-bottom: 16px;">
+        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px 12px; border-radius: var(--border-radius-sm); font-size: 13px; color: #ef4444; margin-bottom: 16px;">
           {{ authError }}
         </div>
       }
 
       <form (submit)="handleAuthSubmit(); $event.preventDefault()">
         <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" class="form-control" name="email" [(ngModel)]="authEmail" required placeholder="name@domain.com">
+          <label for="authEmail">Email address</label>
+          <input type="email" id="authEmail" class="form-control" name="email" [(ngModel)]="authEmail" required placeholder="name@domain.com">
         </div>
         <div class="form-group">
-          <label>Password</label>
-          <input type="password" class="form-control" name="password" [(ngModel)]="authPassword" required placeholder="••••••••">
+          <label for="authPassword">Password</label>
+          <input type="password" id="authPassword" class="form-control" name="password" [(ngModel)]="authPassword" required placeholder="••••••••">
         </div>
 
         <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 20px;">
-          {{ authMode() === 'login' ? 'Sign In' : 'Register' }}
+          {{ authMode() === 'login' ? 'Sign in' : 'Register' }}
         </button>
       </form>
 
       <div style="text-align: center; margin-top: 16px; font-size: 13px; color: var(--text-secondary);">
         @if (authMode() === 'login') {
-          Don't have an account? <a (click)="authMode.set('signup')" style="color: var(--accent-color); cursor: pointer; text-decoration: underline;">Register here</a>
+          Don't have an account? <a (click)="authMode.set('signup')" style="color: var(--accent-primary); cursor: pointer; text-decoration: none; font-weight: 500;">Register here</a>
         } @else {
-          Already have an account? <a (click)="authMode.set('login')" style="color: var(--accent-color); cursor: pointer; text-decoration: underline;">Log in here</a>
+          Already have an account? <a (click)="authMode.set('login')" style="color: var(--accent-primary); cursor: pointer; text-decoration: none; font-weight: 500;">Log in here</a>
         }
       </div>
     </div>
   </div>
 } @else {
-  <!-- Main Dashboard Layout -->
+  <!-- Main Application Shell -->
   <div class="app-container">
     
-    <!-- Sidebar Navigation -->
+    <!-- Sidebar Navigation (Claude-Desktop Style) -->
     <aside class="sidebar">
       <div class="logo">
         <i class="fa-solid fa-briefcase"></i> JobTrack
@@ -68,6 +68,11 @@
             <i class="fa-solid fa-gears"></i> Settings
           </a>
         </li>
+        <li>
+          <a class="nav-item" [class.active]="activeTab() === 'account'" (click)="changeTab('account')">
+            <i class="fa-solid fa-user-gear"></i> Account
+          </a>
+        </li>
       </ul>
       
       <div class="user-profile">
@@ -76,7 +81,7 @@
           <span class="user-name">{{ auth.currentUser()?.name || 'Candidate' }}</span>
           <span class="user-email">{{ auth.currentUser()?.email || 'mock@example.com' }}</span>
         </div>
-        <button class="logout-btn" (click)="handleLogout()" title="Sign Out">
+        <button class="logout-btn" (click)="auth.logout()" title="Sign Out">
           <i class="fa-solid fa-right-from-bracket"></i>
         </button>
       </div>
@@ -85,34 +90,50 @@
     <!-- Main Scrollable Screen -->
     <main class="main-content">
       
-      <!-- Top Header Bar -->
+      <!-- Vercel-Style Top Header Bar -->
       <header class="header-bar">
         <div class="page-title">
+          <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <span>JobTrack</span>
+            <i class="fa-solid fa-chevron-right" style="font-size: 9px;"></i>
+            <span style="color: var(--text-secondary); text-transform: capitalize;">{{ activeTab() }}</span>
+          </div>
+
           @switch (activeTab()) {
             @case ('dashboard') {
               <h1>Insights Dashboard</h1>
-              <p>Visual statistics and missing skill gaps frequency</p>
             }
             @case ('kanban') {
               <h1>Kanban Pipeline</h1>
-              <p>Manage application statuses across stages</p>
             }
             @case ('applications') {
               <h1>All Applications</h1>
-              <p>Complete directory of logged job search records</p>
             }
             @case ('settings') {
               <h1>Settings & Integrations</h1>
-              <p>AWS credentials, resume uploads, and custom rules</p>
+            }
+            @case ('account') {
+              <h1>Account & Data Management</h1>
             }
           }
         </div>
         
         <div class="header-actions">
-          <!-- Quick Status banner about AWS Cognito config -->
+          <!-- Cmd+K Shortcut Trigger -->
+          <button class="btn btn-secondary" (click)="isCmdKOpen.set(true)" style="padding: 6px 12px; font-size: 12px;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search...</span>
+            <kbd style="background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; font-size: 10px;">⌘K</kbd>
+          </button>
+
+          <!-- Light/Dark Mode Toggle -->
+          <button class="btn btn-secondary" (click)="theme.toggleTheme()" style="padding: 6px 10px;" [title]="'Switch to ' + (theme.currentTheme() === 'dark' ? 'Light' : 'Dark') + ' Mode'">
+            <i class="fa-solid" [class.fa-sun]="theme.currentTheme() === 'dark'" [class.fa-moon]="theme.currentTheme() === 'light'"></i>
+          </button>
+
+          <!-- Subdued AWS Status indicator -->
           <div class="aws-config-status" [class.aws-status-active]="auth.isCognitoConfigured()" [class.aws-status-mock]="!auth.isCognitoConfigured()">
-            <i class="fa-solid" [class.fa-circle-check]="auth.isCognitoConfigured()" [class.fa-triangle-exclamation]="!auth.isCognitoConfigured()"></i>
-            {{ auth.isCognitoConfigured() ? 'AWS Cognito Active' : 'Running in Local Mock Mode' }}
+            {{ auth.isCognitoConfigured() ? 'AWS Active' : 'Local Mock' }}
           </div>
           
           <button class="btn btn-primary" (click)="openCreateModal()">
@@ -121,697 +142,487 @@
         </div>
       </header>
 
-      <!-- View Sections -->
-      @switch (activeTab()) {
-        
-        <!-- DASHBOARD TAB -->
-        @case ('dashboard') {
+      <!-- VIEW 1: DASHBOARD -->
+      @if (activeTab() === 'dashboard') {
+        <div style="display: flex; flex-direction: column; gap: 24px;">
+          <!-- 5 Stats Tiles -->
           <div class="stats-grid">
-            <!-- Total Logs -->
-            <div class="glass-panel stat-card">
-              <div class="stat-icon-wrapper" style="background: rgba(59, 130, 246, 0.1); color: var(--color-applied);">
-                <i class="fa-solid fa-folder-open"></i>
+            <div class="stat-card">
+              <div class="stat-icon-wrapper" style="color: var(--chart-applied);">
+                <i class="fa-solid fa-folder"></i>
               </div>
               <div class="stat-info">
                 <span class="stat-title">Total Logs</span>
-                <span class="stat-value">{{ stats().totalApplications }}</span>
-                <span class="stat-sub">Active job hunts</span>
+                <span class="stat-value num-tabular">{{ stats().totalApplications }}</span>
+                <span class="stat-subtitle">Active job hunts</span>
               </div>
             </div>
-            
-            <!-- Response Rate -->
-            <div class="glass-panel stat-card">
-              <div class="stat-icon-wrapper" style="background: rgba(13, 148, 136, 0.1); color: var(--color-screening);">
+
+            <div class="stat-card">
+              <div class="stat-icon-wrapper" style="color: var(--chart-screening);">
                 <i class="fa-solid fa-paper-plane"></i>
               </div>
               <div class="stat-info">
                 <span class="stat-title">Response Rate</span>
-                <span class="stat-value">{{ (stats().responseRate * 100).toFixed(0) }}%</span>
-                <span class="stat-sub">Moved past Applied</span>
+                <span class="stat-value num-tabular">{{ stats().responseRate }}%</span>
+                <span class="stat-subtitle">Moved past Applied</span>
               </div>
             </div>
 
-            <!-- Ghosting Rate -->
-            <div class="glass-panel stat-card">
-              <div class="stat-icon-wrapper" style="background: rgba(217, 119, 6, 0.1); color: var(--color-interview);">
+            <div class="stat-card">
+              <div class="stat-icon-wrapper" style="color: var(--chart-interview);">
                 <i class="fa-solid fa-ghost"></i>
               </div>
               <div class="stat-info">
                 <span class="stat-title">Ghosting Rate</span>
-                <span class="stat-value" style="color: var(--color-interview);">{{ (stats().ghostingRate * 100).toFixed(0) }}%</span>
-                <span class="stat-sub">Flipped to Ghosted</span>
+                <span class="stat-value num-tabular">{{ stats().ghostingRate }}%</span>
+                <span class="stat-subtitle">Flipped to Ghosted</span>
               </div>
             </div>
 
-            <!-- Avg Response Time -->
-            <div class="glass-panel stat-card">
-              <div class="stat-icon-wrapper" style="background: rgba(5, 150, 105, 0.1); color: var(--color-offer);">
+            <div class="stat-card">
+              <div class="stat-icon-wrapper" style="color: var(--chart-offer);">
                 <i class="fa-solid fa-clock"></i>
               </div>
               <div class="stat-info">
                 <span class="stat-title">Avg Response Time</span>
-                <span class="stat-value">{{ stats().avgDaysToFirstResponse }}d</span>
-                <span class="stat-sub">From application date</span>
+                <span class="stat-value num-tabular">{{ stats().avgDaysToFirstResponse }}d</span>
+                <span class="stat-subtitle">From application date</span>
               </div>
             </div>
 
-            <!-- Avg AI Fit Score -->
-            <div class="glass-panel stat-card">
-              <div class="stat-icon-wrapper" style="background: rgba(59, 130, 246, 0.1); color: var(--color-applied);">
+            <div class="stat-card">
+              <div class="stat-icon-wrapper" style="color: var(--accent-primary);">
                 <i class="fa-solid fa-wand-magic-sparkles"></i>
               </div>
               <div class="stat-info">
                 <span class="stat-title">Avg AI Fit Score</span>
-                <span class="stat-value" style="color: var(--color-applied);">
-                  {{ stats().averageFitScore !== null ? stats().averageFitScore + '%' : 'N/A' }}
-                </span>
-                <span class="stat-sub">LLM alignment score</span>
+                <span class="stat-value num-tabular">{{ stats().averageFitScore ? stats().averageFitScore + '%' : 'N/A' }}</span>
+                <span class="stat-subtitle">LLM alignment score</span>
               </div>
             </div>
           </div>
 
-          <div class="charts-grid">
-            <!-- Applications by Status SVG Chart -->
-            <div class="glass-panel">
-              <h3 style="margin-top: 0; margin-bottom: 20px;">Applications Status Volume</h3>
-              <div style="position: relative;">
-                <svg viewBox="0 0 600 220" class="svg-chart" style="background: rgba(0, 0, 0, 0.15); border-radius: 8px; padding: 10px;">
-                  <!-- Y Axis grid lines -->
-                  <line x1="50" y1="30" x2="570" y2="30" class="chart-grid-line" />
-                  <line x1="50" y1="80" x2="570" y2="80" class="chart-grid-line" />
-                  <line x1="50" y1="130" x2="570" y2="130" class="chart-grid-line" />
-                  <line x1="50" y1="180" x2="570" y2="180" stroke="rgba(255,255,255,0.15)" stroke-width="2" />
-                  
-                  <!-- X Axis labels and Bars -->
-                  <!-- Applied -->
-                  <rect x="75" [attr.y]="180 - getBarHeight(stats().byStatus.applied)" width="50" [attr.height]="getBarHeight(stats().byStatus.applied)" fill="var(--color-applied)" rx="4" class="chart-bar" />
-                  <text x="100" y="200" fill="#94a3b8" font-size="11" text-anchor="middle">Applied ({{ stats().byStatus.applied }})</text>
-                  
-                  <!-- Screening -->
-                  <rect x="155" [attr.y]="180 - getBarHeight(stats().byStatus.screening)" width="50" [attr.height]="getBarHeight(stats().byStatus.screening)" fill="var(--color-screening)" rx="4" class="chart-bar" />
-                  <text x="180" y="200" fill="#94a3b8" font-size="11" text-anchor="middle">Screening ({{ stats().byStatus.screening }})</text>
- 
-                  <!-- Interview -->
-                  <rect x="235" [attr.y]="180 - getBarHeight(stats().byStatus.interview)" width="50" [attr.height]="getBarHeight(stats().byStatus.interview)" fill="var(--color-interview)" rx="4" class="chart-bar" />
-                  <text x="260" y="200" fill="#94a3b8" font-size="11" text-anchor="middle">Interview ({{ stats().byStatus.interview }})</text>
- 
-                  <!-- Offer -->
-                  <rect x="315" [attr.y]="180 - getBarHeight(stats().byStatus.offer)" width="50" [attr.height]="getBarHeight(stats().byStatus.offer)" fill="var(--color-offer)" rx="4" class="chart-bar" />
-                  <text x="340" y="200" fill="#94a3b8" font-size="11" text-anchor="middle">Offer ({{ stats().byStatus.offer }})</text>
- 
-                  <!-- Rejected -->
-                  <rect x="395" [attr.y]="180 - getBarHeight(stats().byStatus.rejected)" width="50" [attr.height]="getBarHeight(stats().byStatus.rejected)" fill="var(--color-rejected)" rx="4" class="chart-bar" />
-                  <text x="420" y="200" fill="#94a3b8" font-size="11" text-anchor="middle">Rejected ({{ stats().byStatus.rejected }})</text>
- 
-                  <!-- Ghosted -->
-                  <rect x="475" [attr.y]="180 - getBarHeight(stats().byStatus.ghosted)" width="50" [attr.height]="getBarHeight(stats().byStatus.ghosted)" fill="var(--color-ghosted)" rx="4" class="chart-bar" />
-                  <text x="500" y="200" fill="#94a3b8" font-size="11" text-anchor="middle">Ghosted ({{ stats().byStatus.ghosted }})</text>
-                </svg>
-              </div>
+          <!-- Applications Status Volume Chart -->
+          <div class="glass-panel">
+            <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 15px; font-weight: 600;">Applications Status Volume</h3>
+            <div style="height: 200px; display: flex; align-items: flex-end; gap: 24px; padding-top: 20px; border-bottom: 1px solid var(--border-subtle);">
+              @for (item of [
+                { label: 'Applied', key: 'applied', color: 'var(--chart-applied)' },
+                { label: 'Screening', key: 'screening', color: 'var(--chart-screening)' },
+                { label: 'Interview', key: 'interview', color: 'var(--chart-interview)' },
+                { label: 'Offer', key: 'offer', color: 'var(--chart-offer)' },
+                { label: 'Rejected', key: 'rejected', color: 'var(--chart-rejected)' },
+                { label: 'Ghosted', key: 'ghosted', color: 'var(--chart-ghosted)' }
+              ]; track item.key) {
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; height: 100%; justify-content: flex-end;">
+                  <div [style.height.px]="getBarHeight(stats().byStatus?.[item.key] || 0)" [style.background]="item.color" style="width: 100%; max-width: 48px; border-radius: 6px 6px 0 0; transition: height 0.3s ease;"></div>
+                  <span style="font-size: 12px; color: var(--text-secondary);">{{ item.label }} ({{ stats().byStatus?.[item.key] || 0 }})</span>
+                </div>
+              }
             </div>
- 
-            <!-- Source distribution list -->
-            <div class="glass-panel" style="display: flex; flex-direction: column;">
-              <h3 style="margin-top: 0; margin-bottom: 20px;">Top Sources</h3>
-              <div style="display: flex; flex-direction: column; gap: 14px; flex: 1; justify-content: center;">
-                @for (source of stats().bySource | keyvalue; track source.key) {
-                  <div>
-                    <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
-                      <span>{{ formatSourceLabel(source.key) }}</span>
-                      <span style="font-weight: 600;">{{ source.value }}</span>
-                    </div>
-                    <div style="height: 6px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;">
-                      <div [style.width.%]="(source.value / stats().totalApplications) * 100" style="height: 100%; background: var(--accent-gradient); border-radius: 4px;"></div>
+          </div>
+
+          <!-- Skill Gap Frequency -->
+          <div class="glass-panel">
+            <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 15px; font-weight: 600;">Top Missing Skill Gaps</h3>
+            <div class="skills-list">
+              @for (gap of skillGap(); track gap._id) {
+                <span class="pill-badge pill-rejected">
+                  {{ gap._id }} &bull; {{ gap.count }} requests
+                </span>
+              } @empty {
+                <p style="font-size: 13px; color: var(--text-tertiary); margin: 0;">No skill gaps detected yet. Run AI Fit Check on applications to populate.</p>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- VIEW 2: KANBAN BOARD -->
+      @if (activeTab() === 'kanban') {
+        <div class="kanban-board">
+          @for (column of [
+            { id: 'applied', label: 'Applied', icon: 'fa-folder' },
+            { id: 'screening', label: 'Screening', icon: 'fa-magnifying-glass' },
+            { id: 'interview', label: 'Interview', icon: 'fa-comments' },
+            { id: 'offer', label: 'Offer', icon: 'fa-trophy' },
+            { id: 'rejected', label: 'Rejected', icon: 'fa-circle-xmark' },
+            { id: 'ghosted', label: 'Ghosted', icon: 'fa-ghost' }
+          ]; track column.id) {
+            <div class="kanban-column">
+              <div class="kanban-header">
+                <span class="kanban-title">
+                  <i class="fa-solid {{ column.icon }}"></i> {{ column.label }}
+                </span>
+                <span class="kanban-count num-tabular">{{ getApplicationsByStatus(column.id).length }}</span>
+              </div>
+
+              <div class="kanban-cards">
+                @for (app of getApplicationsByStatus(column.id); track app._id) {
+                  <div class="kanban-card" (click)="openDetailModal(app)">
+                    <div class="kanban-card-company">{{ app.company }}</div>
+                    <div class="kanban-card-role">{{ app.role }}</div>
+                    <div class="kanban-card-meta">
+                      <span><i class="fa-solid fa-calendar-day"></i> {{ app.dateApplied | date:'MMM d' }}</span>
+                      @if (app.fitScore?.score !== null && app.fitScore?.score !== undefined) {
+                        <span class="pill-badge pill-offer num-tabular">{{ app.fitScore.score }}%</span>
+                      }
                     </div>
                   </div>
                 } @empty {
-                  <div style="text-align: center; color: var(--text-muted); font-size: 13px;">
-                    No source data found.
+                  <!-- Minimal Empty State -->
+                  <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 160px; color: var(--text-tertiary); text-align: center;">
+                    <i class="fa-solid fa-inbox" style="font-size: 20px; margin-bottom: 8px; opacity: 0.4;"></i>
+                    <span style="font-size: 12px;">No applications yet</span>
                   </div>
                 }
               </div>
             </div>
-          </div>
- 
-          <!-- Skill Gap analysis aggregate -->
-          <div class="glass-panel">
-            <h3 style="margin-top: 0; margin-bottom: 16px;">Top Skill Gaps (Aggregated Missing Skills from AI Fit-Checks)</h3>
-            @if (skillGap().length > 0) {
-              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
-                @for (gap of skillGap(); track gap._id) {
-                  <div style="background: rgba(220, 38, 38, 0.02); border: 1px solid rgba(220, 38, 38, 0.08); padding: 12px 16px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s;" class="table-row-hover">
-                    <span style="font-weight: 600; text-transform: uppercase; font-size: 13px; color: var(--color-rejected);">{{ gap._id }}</span>
-                    <span style="background: rgba(220, 38, 38, 0.08); padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; color: var(--color-rejected);">{{ gap.count }} requests</span>
-                  </div>
-                }
-              </div>
-            } @else {
-              <div style="text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px;">
-                <i class="fa-solid fa-wand-magic-sparkles" style="font-size: 24px; display: block; margin-bottom: 10px;"></i>
-                No AI fit-checks have run yet. Missing skills analysis will aggregate here once fit-checks are run.
-              </div>
-            }
-          </div>
-        }
+          }
+        </div>
+      }
 
-        <!-- KANBAN BOARD TAB -->
-        @case ('kanban') {
-          <div class="kanban-board">
+      <!-- VIEW 3: ALL APPLICATIONS TABLE -->
+      @if (activeTab() === 'applications') {
+        <div class="glass-panel" style="padding: 0; overflow: hidden;">
+          <div style="padding: 16px 20px; border-bottom: 1px solid var(--border-subtle); display: flex; gap: 16px; align-items: center;">
+            <input type="text" class="form-control" placeholder="Filter by company or role..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)" style="max-width: 300px;">
             
-            <!-- Applied -->
-            <div class="kanban-column" style="--column-accent-color: var(--color-applied)">
-              <div class="kanban-header">
-                <span>
-                  <i class="fa-solid fa-folder-open" style="color: var(--color-applied); margin-right: 6px;"></i>
-                  Applied
-                </span>
-                <span class="kanban-count">{{ getKanbanApplications('applied').length }}</span>
-              </div>
-              @for (app of getKanbanApplications('applied'); track app._id) {
-                <div class="kanban-card" (click)="viewApplication(app)">
-                  <div class="kanban-card-title">{{ app.company }}</div>
-                  <div class="kanban-card-sub">{{ app.role }}</div>
-                  <div class="kanban-card-footer">
-                    <span>
-                      <i class="fa-solid fa-calendar-days" style="margin-right: 4px; font-size: 10px;"></i>
-                      {{ app.dateApplied | date:'MMM d' }}
-                    </span>
-                    @if (app.fitScore?.score !== null) {
-                      <span class="badge" [class.badge-offer]="app.fitScore.verdict === 'STRONG_MATCH'" [class.badge-interview]="app.fitScore.verdict === 'COIN_FLIP'" [class.badge-rejected]="app.fitScore.verdict === 'REACH'" style="font-size: 9px; padding: 2px 6px;">
-                        {{ app.fitScore.score }}%
-                      </span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-
-            <!-- Screening -->
-            <div class="kanban-column" style="--column-accent-color: var(--color-screening)">
-              <div class="kanban-header">
-                <span>
-                  <i class="fa-solid fa-magnifying-glass" style="color: var(--color-screening); margin-right: 6px;"></i>
-                  Screening
-                </span>
-                <span class="kanban-count">{{ getKanbanApplications('screening').length }}</span>
-              </div>
-              @for (app of getKanbanApplications('screening'); track app._id) {
-                <div class="kanban-card" (click)="viewApplication(app)">
-                  <div class="kanban-card-title">{{ app.company }}</div>
-                  <div class="kanban-card-sub">{{ app.role }}</div>
-                  <div class="kanban-card-footer">
-                    <span>
-                      <i class="fa-solid fa-calendar-days" style="margin-right: 4px; font-size: 10px;"></i>
-                      {{ app.dateApplied | date:'MMM d' }}
-                    </span>
-                    @if (app.fitScore?.score !== null) {
-                      <span class="badge" [class.badge-offer]="app.fitScore.verdict === 'STRONG_MATCH'" [class.badge-interview]="app.fitScore.verdict === 'COIN_FLIP'" [class.badge-rejected]="app.fitScore.verdict === 'REACH'" style="font-size: 9px; padding: 2px 6px;">
-                        {{ app.fitScore.score }}%
-                      </span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-
-            <!-- Interview -->
-            <div class="kanban-column" style="--column-accent-color: var(--color-interview)">
-              <div class="kanban-header">
-                <span>
-                  <i class="fa-solid fa-comments" style="color: var(--color-interview); margin-right: 6px;"></i>
-                  Interview
-                </span>
-                <span class="kanban-count">{{ getKanbanApplications('interview').length }}</span>
-              </div>
-              @for (app of getKanbanApplications('interview'); track app._id) {
-                <div class="kanban-card" (click)="viewApplication(app)">
-                  <div class="kanban-card-title">{{ app.company }}</div>
-                  <div class="kanban-card-sub">{{ app.role }}</div>
-                  <div class="kanban-card-footer">
-                    <span>
-                      <i class="fa-solid fa-calendar-days" style="margin-right: 4px; font-size: 10px;"></i>
-                      {{ app.dateApplied | date:'MMM d' }}
-                    </span>
-                    @if (app.fitScore?.score !== null) {
-                      <span class="badge" [class.badge-offer]="app.fitScore.verdict === 'STRONG_MATCH'" [class.badge-interview]="app.fitScore.verdict === 'COIN_FLIP'" [class.badge-rejected]="app.fitScore.verdict === 'REACH'" style="font-size: 9px; padding: 2px 6px;">
-                        {{ app.fitScore.score }}%
-                      </span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-
-            <!-- Offer -->
-            <div class="kanban-column" style="--column-accent-color: var(--color-offer)">
-              <div class="kanban-header">
-                <span>
-                  <i class="fa-solid fa-trophy" style="color: var(--color-offer); margin-right: 6px;"></i>
-                  Offer
-                </span>
-                <span class="kanban-count">{{ getKanbanApplications('offer').length }}</span>
-              </div>
-              @for (app of getKanbanApplications('offer'); track app._id) {
-                <div class="kanban-card" (click)="viewApplication(app)">
-                  <div class="kanban-card-title">{{ app.company }}</div>
-                  <div class="kanban-card-sub">{{ app.role }}</div>
-                  <div class="kanban-card-footer">
-                    <span>
-                      <i class="fa-solid fa-calendar-days" style="margin-right: 4px; font-size: 10px;"></i>
-                      {{ app.dateApplied | date:'MMM d' }}
-                    </span>
-                    @if (app.fitScore?.score !== null) {
-                      <span class="badge" [class.badge-offer]="app.fitScore.verdict === 'STRONG_MATCH'" [class.badge-interview]="app.fitScore.verdict === 'COIN_FLIP'" [class.badge-rejected]="app.fitScore.verdict === 'REACH'" style="font-size: 9px; padding: 2px 6px;">
-                        {{ app.fitScore.score }}%
-                      </span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-
-            <!-- Rejected -->
-            <div class="kanban-column" style="--column-accent-color: var(--color-rejected)">
-              <div class="kanban-header">
-                <span>
-                  <i class="fa-solid fa-circle-xmark" style="color: var(--color-rejected); margin-right: 6px;"></i>
-                  Rejected
-                </span>
-                <span class="kanban-count">{{ getKanbanApplications('rejected').length }}</span>
-              </div>
-              @for (app of getKanbanApplications('rejected'); track app._id) {
-                <div class="kanban-card" (click)="viewApplication(app)">
-                  <div class="kanban-card-title">{{ app.company }}</div>
-                  <div class="kanban-card-sub">{{ app.role }}</div>
-                  <div class="kanban-card-footer">
-                    <span>
-                      <i class="fa-solid fa-calendar-days" style="margin-right: 4px; font-size: 10px;"></i>
-                      {{ app.dateApplied | date:'MMM d' }}
-                    </span>
-                    @if (app.fitScore?.score !== null) {
-                      <span class="badge" [class.badge-offer]="app.fitScore.verdict === 'STRONG_MATCH'" [class.badge-interview]="app.fitScore.verdict === 'COIN_FLIP'" [class.badge-rejected]="app.fitScore.verdict === 'REACH'" style="font-size: 9px; padding: 2px 6px;">
-                        {{ app.fitScore.score }}%
-                      </span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-
-            <!-- Ghosted -->
-            <div class="kanban-column" style="--column-accent-color: var(--color-ghosted)">
-              <div class="kanban-header">
-                <span>
-                  <i class="fa-solid fa-ghost" style="color: var(--color-ghosted); margin-right: 6px;"></i>
-                  Ghosted
-                </span>
-                <span class="kanban-count">{{ getKanbanApplications('ghosted').length }}</span>
-              </div>
-              @for (app of getKanbanApplications('ghosted'); track app._id) {
-                <div class="kanban-card" (click)="viewApplication(app)">
-                  <div class="kanban-card-title">{{ app.company }}</div>
-                  <div class="kanban-card-sub">{{ app.role }}</div>
-                  <div class="kanban-card-footer">
-                    <span>
-                      <i class="fa-solid fa-calendar-days" style="margin-right: 4px; font-size: 10px;"></i>
-                      {{ app.dateApplied | date:'MMM d' }}
-                    </span>
-                    @if (app.fitScore?.score !== null) {
-                      <span class="badge" [class.badge-offer]="app.fitScore.verdict === 'STRONG_MATCH'" [class.badge-interview]="app.fitScore.verdict === 'COIN_FLIP'" [class.badge-rejected]="app.fitScore.verdict === 'REACH'" style="font-size: 9px; padding: 2px 6px;">
-                        {{ app.fitScore.score }}%
-                      </span>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-
+            <select class="form-control" [ngModel]="selectedStatusFilter()" (ngModelChange)="selectedStatusFilter.set($event)" style="max-width: 160px;">
+              <option value="all">All Statuses</option>
+              <option value="applied">Applied</option>
+              <option value="screening">Screening</option>
+              <option value="interview">Interview</option>
+              <option value="offer">Offer</option>
+              <option value="rejected">Rejected</option>
+              <option value="ghosted">Ghosted</option>
+            </select>
           </div>
-        }
 
-        <!-- APPLICATIONS LIST TAB -->
-        @case ('applications') {
-          <div class="glass-panel" style="padding: 16px;">
-            <div style="display: flex; gap: 16px; margin-bottom: 20px;">
-              <input type="text" class="form-control" style="max-width: 300px;" placeholder="Search company, role..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
-              
-              <select class="form-control" style="max-width: 200px;" [ngModel]="selectedStatusFilter()" (ngModelChange)="selectedStatusFilter.set($event)">
-                <option value="all">All Stages</option>
-                <option value="applied">Applied</option>
-                <option value="screening">Screening</option>
-                <option value="interview">Interview</option>
-                <option value="offer">Offer</option>
-                <option value="rejected">Rejected</option>
-                <option value="ghosted">Ghosted</option>
-              </select>
+          <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+            <thead>
+              <tr style="border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: 12px; font-weight: 500;">
+                <th style="padding: 12px 20px;">Company</th>
+                <th style="padding: 12px 20px;">Role</th>
+                <th style="padding: 12px 20px;">Status</th>
+                <th style="padding: 12px 20px;">Date Applied</th>
+                <th style="padding: 12px 20px;">Location</th>
+                <th style="padding: 12px 20px;">Source</th>
+                <th style="padding: 12px 20px;">Fit Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (app of filteredApplications; track app._id) {
+                <tr style="border-bottom: 1px solid var(--border-subtle); cursor: pointer;" (click)="openDetailModal(app)">
+                  <td style="padding: 12px 20px; font-weight: 500; color: var(--text-primary);">{{ app.company }}</td>
+                  <td style="padding: 12px 20px; color: var(--text-secondary);">{{ app.role }}</td>
+                  <td style="padding: 12px 20px;">
+                    <span class="pill-badge pill-{{ app.status }}">{{ app.status }}</span>
+                  </td>
+                  <td style="padding: 12px 20px; color: var(--text-tertiary);" class="num-tabular">{{ app.dateApplied | date:'mediumDate' }}</td>
+                  <td style="padding: 12px 20px; color: var(--text-tertiary);">{{ app.location || '—' }}</td>
+                  <td style="padding: 12px 20px; color: var(--text-tertiary);">{{ app.source || 'Direct' }}</td>
+                  <td style="padding: 12px 20px;" class="num-tabular">
+                    {{ app.fitScore?.score !== null && app.fitScore?.score !== undefined ? app.fitScore.score + '%' : '—' }}
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" style="padding: 40px; text-align: center; color: var(--text-tertiary);">No applications found.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- VIEW 4: SETTINGS (2-Column Dense Layout) -->
+      @if (activeTab() === 'settings') {
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <!-- Left Column: Resume Upload -->
+          <div class="glass-panel">
+            <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 15px; font-weight: 600;">Resume PDF Management</h3>
+            
+            <div class="form-group">
+              <label>Select Resume PDF</label>
+              <input type="file" (change)="onFileSelected($event)" accept="application/pdf" class="form-control">
             </div>
 
-            <div style="overflow-x: auto;">
-              <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-                <thead>
-                  <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-secondary);">
-                    <th style="padding: 14px;">Company</th>
-                    <th style="padding: 14px;">Role</th>
-                    <th style="padding: 14px;">Date Applied</th>
-                    <th style="padding: 14px;">Location</th>
-                    <th style="padding: 14px;">Stage</th>
-                    <th style="padding: 14px;">Fit Score</th>
-                    <th style="padding: 14px; text-align: right;">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (app of getFilteredApplications(); track app._id) {
-                    <tr style="border-bottom: 1px solid var(--border-color); cursor: pointer;" (click)="viewApplication(app)" class="table-row-hover">
-                      <td style="padding: 14px; font-weight: 600;">{{ app.company }}</td>
-                      <td style="padding: 14px;">{{ app.role }}</td>
-                      <td style="padding: 14px;">{{ app.dateApplied | date:'mediumDate' }}</td>
-                      <td style="padding: 14px; color: var(--text-secondary);">{{ app.location || 'N/A' }}</td>
-                      <td style="padding: 14px;">
-                        <span class="badge badge-{{ app.status }}">{{ app.status }}</span>
-                      </td>
-                      <td style="padding: 14px;">
-                        @if (app.fitScore?.score !== null) {
-                          <span class="badge" [class.badge-offer]="app.fitScore.verdict === 'STRONG_MATCH'" [class.badge-interview]="app.fitScore.verdict === 'COIN_FLIP'" [class.badge-rejected]="app.fitScore.verdict === 'REACH'">
-                            {{ app.fitScore.score }}% ({{ app.fitScore.verdict }})
-                          </span>
-                        } @else {
-                          <span style="color: var(--text-muted); font-size: 13px;">Unscored</span>
-                        }
-                      </td>
-                      <td style="padding: 14px; text-align: right;" (click)="$event.stopPropagation()">
-                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                          <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;" (click)="viewApplication(app)">
-                            View
-                          </button>
-                          <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; border-color: rgba(239, 68, 68, 0.2); color: #f87171;" (click)="deleteApplication(app._id)">
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  } @empty {
-                    <tr>
-                      <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                        No applications matched your criteria.
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
+            <button class="btn btn-primary" (click)="uploadSelectedResume()" [disabled]="!selectedFile || uploadingResume()">
+              {{ uploadingResume() ? 'Uploading PDF...' : 'Upload Resume Version' }}
+            </button>
+
+            @if (fileUploadStatus) {
+              <p style="font-size: 12px; color: var(--accent-success); margin-top: 10px;">{{ fileUploadStatus }}</p>
+            }
+
+            <h4 style="margin-top: 24px; margin-bottom: 12px; font-size: 13px; font-weight: 600;">Uploaded Resumes</h4>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              @for (resume of resumes(); track resume._id) {
+                <div style="padding: 10px 12px; background: var(--bg-surface-raised); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); font-size: 12px; display: flex; justify-content: space-between;">
+                  <span><i class="fa-solid fa-file-pdf"></i> {{ resume.fileName }}</span>
+                  <span style="color: var(--text-tertiary);">{{ resume.createdAt | date:'shortDate' }}</span>
+                </div>
+              } @empty {
+                <p style="font-size: 12px; color: var(--text-tertiary);">No PDF resumes uploaded yet.</p>
+              }
             </div>
           </div>
-        }
 
-        <!-- SETTINGS TAB -->
-        @case ('settings') {
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-            <!-- Cognito Credentials Local Setup -->
-            <div class="glass-panel">
-              <h3 style="margin-top: 0; margin-bottom: 20px;">AWS Cognito Security Integration</h3>
-              <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px;">
-                Enter your User Pool properties to authenticate via Cognito. Claims extracted from validated tokens will override the local mock user.
-              </p>
-              
-              <div class="form-group">
-                <label>User Pool ID</label>
-                <input type="text" class="form-control" [(ngModel)]="cognitoUserPoolId" placeholder="us-east-1_xxxxxxxx">
-              </div>
-              <div class="form-group">
-                <label>Client ID</label>
-                <input type="text" class="form-control" [(ngModel)]="cognitoClientId" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxx">
-              </div>
-              <div class="form-group">
-                <label>AWS Region</label>
-                <input type="text" class="form-control" [(ngModel)]="cognitoRegion" placeholder="us-east-1">
-              </div>
+          <!-- Right Column: AWS Cognito Config -->
+          <div class="glass-panel">
+            <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 15px; font-weight: 600;">AWS Cognito Settings</h3>
+            
+            <div class="form-group">
+              <label for="cogPoolId">Cognito User Pool ID</label>
+              <input type="text" id="cogPoolId" class="form-control" [(ngModel)]="cognitoUserPoolId" placeholder="us-east-1_XXXXX">
+            </div>
 
-              <button class="btn btn-primary" style="margin-top: 10px;" (click)="saveCognitoConfig()">
-                Apply Cognito Config
+            <div class="form-group">
+              <label for="cogClientId">App Client ID</label>
+              <input type="text" id="cogClientId" class="form-control" [(ngModel)]="cognitoClientId" placeholder="xxxxxxxxxxxxxx">
+            </div>
+
+            <div class="form-group">
+              <label for="cogRegion">AWS Region</label>
+              <input type="text" id="cogRegion" class="form-control" [(ngModel)]="cognitoRegion" placeholder="us-east-1">
+            </div>
+
+            <button class="btn btn-secondary" (click)="saveCognitoConfig()">Save Parameters Locally</button>
+          </div>
+        </div>
+      }
+
+      <!-- VIEW 5: ACCOUNT MANAGEMENT (Phase 4) -->
+      @if (activeTab() === 'account') {
+        <div style="display: flex; flex-direction: column; gap: 24px; max-width: 800px;">
+          <!-- Export Data Panel -->
+          <div class="glass-panel">
+            <h3 style="margin-top: 0; margin-bottom: 6px; font-size: 15px; font-weight: 600;">Export My Data</h3>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 16px 0;">Download a complete backup of all logged applications, statuses, and AI scores.</p>
+            
+            <div style="display: flex; gap: 12px;">
+              <button class="btn btn-secondary" (click)="exportDataJSON()">
+                <i class="fa-solid fa-file-code"></i> Export as JSON
+              </button>
+              <button class="btn btn-secondary" (click)="exportDataCSV()">
+                <i class="fa-solid fa-file-csv"></i> Export as CSV
               </button>
             </div>
+          </div>
 
-            <!-- Custom Operations (Ghost check scheduler config + Resumes) -->
-            <div style="display: flex; flex-direction: column; gap: 24px;">
-              
-              <!-- Manual trigger scan -->
-              <div class="glass-panel">
-                <h3 style="margin-top: 0; margin-bottom: 12px;">Automated Ghosting Scan</h3>
-                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
-                  The server scans applications daily. Click below to trigger the threshold check manually for quick review.
-                </p>
-                <button class="btn btn-secondary" style="border-color: #fbbf24; color: #fbbf24;" (click)="triggerGhostScan()">
-                  <i class="fa fa-refresh"></i> Scan For Ghosted Logs
+          <!-- Danger Zone Panel -->
+          <div class="glass-panel" style="border-color: rgba(239, 68, 68, 0.2);">
+            <h3 style="margin-top: 0; margin-bottom: 6px; font-size: 15px; font-weight: 600; color: var(--accent-danger);">Danger Zone</h3>
+            <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 20px 0;">Irreversible account and data deletion actions.</p>
+
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--border-subtle);">
+                <div>
+                  <h4 style="margin: 0 0 4px 0; font-size: 13px; font-weight: 600;">Delete All Application Data</h4>
+                  <p style="margin: 0; font-size: 12px; color: var(--text-tertiary);">Wipe all logged job applications and resumes while keeping your login account active.</p>
+                </div>
+                <button class="btn btn-secondary" style="color: var(--accent-danger); border-color: rgba(239, 68, 68, 0.2);" (click)="isDeleteDataOpen.set(true); deleteConfirmText = ''; deleteError = '';">
+                  Wipe Data
                 </button>
               </div>
 
-              <!-- Upload Resume Version -->
-              <div class="glass-panel">
-                <h3 style="margin-top: 0; margin-bottom: 16px;">Resume Version Vault</h3>
-                <div style="border: 1px dashed var(--border-color); padding: 16px; border-radius: 8px; text-align: center; margin-bottom: 16px;">
-                  <input type="file" (change)="onFileSelected($event)" accept=".pdf" style="margin-bottom: 10px; font-size: 13px;">
-                  @if (selectedFile) {
-                    <div style="font-size: 13px; margin-bottom: 10px; color: var(--accent-color);">
-                      Selected: {{ selectedFile.name }}
-                    </div>
-                  }
-                  <button class="btn btn-primary" style="margin: 0 auto;" [disabled]="!selectedFile || uploadingResume()" (click)="uploadResume()">
-                    {{ uploadingResume() ? 'Processing PDF...' : 'Upload & Parse PDF' }}
-                  </button>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                  <h4 style="margin: 0 0 4px 0; font-size: 13px; font-weight: 600; color: var(--accent-danger);">Delete Entire Account</h4>
+                  <p style="margin: 0; font-size: 12px; color: var(--text-tertiary);">Permanently remove your user record and all associated application history.</p>
                 </div>
-                
-                @if (fileUploadStatus) {
-                  <p style="font-size: 12px; margin-top: 6px; color: var(--text-secondary);">{{ fileUploadStatus }}</p>
-                }
-
-                <h4 style="margin-top: 20px; margin-bottom: 10px;">Available Versions</h4>
-                <div style="display: flex; flex-direction: column; gap: 8px; max-height: 120px; overflow-y: auto;">
-                  @for (resume of resumes(); track resume._id) {
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; padding: 6px; background: rgba(0,0,0,0.1); border-radius: 4px;">
-                      <span style="font-weight: 500;">{{ resume.fileName }}</span>
-                      <span style="color: var(--text-muted);">{{ resume.createdAt | date:'shortDate' }}</span>
-                    </div>
-                  } @empty {
-                    <div style="font-size: 12px; color: var(--text-muted);">No resumes uploaded yet.</div>
-                  }
-                </div>
+                <button class="btn btn-primary" style="background: var(--accent-danger); color: #000;" (click)="isDeleteAccountOpen.set(true); deleteConfirmText = ''; deleteError = '';">
+                  Delete Account
+                </button>
               </div>
-
             </div>
           </div>
-        }
-
+        </div>
       }
 
     </main>
   </div>
 
-  <!-- CREATE DIALOG MODAL -->
+  <!-- CMD+K COMMAND PALETTE OVERLAY (Phase 2 & 5) -->
+  @if (isCmdKOpen()) {
+    <div class="modal-overlay" (click)="isCmdKOpen.set(false)">
+      <div class="modal-content liquid-glass" style="width: 520px; padding: 16px; border-radius: var(--border-radius-lg);" (click)="$event.stopPropagation()">
+        <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border-subtle);">
+          <i class="fa-solid fa-magnifying-glass" style="color: var(--text-tertiary);"></i>
+          <input type="text" [(ngModel)]="cmdKQuery" placeholder="Type a command or search company..." style="background: none; border: none; color: var(--text-primary); font-size: 14px; width: 100%; outline: none;">
+        </div>
+
+        <div style="max-height: 280px; overflow-y: auto; padding-top: 10px; display: flex; flex-direction: column; gap: 4px;">
+          <div style="font-size: 11px; color: var(--text-tertiary); padding: 4px 8px;">Navigation & Actions</div>
+          
+          <button class="nav-item" (click)="runCmdKAction('nav', 'dashboard')">
+            <i class="fa-solid fa-chart-simple"></i> Go to Dashboard
+          </button>
+          <button class="nav-item" (click)="runCmdKAction('nav', 'kanban')">
+            <i class="fa-solid fa-table-columns"></i> Go to Kanban Board
+          </button>
+          <button class="nav-item" (click)="runCmdKAction('nav', 'applications')">
+            <i class="fa-solid fa-list-check"></i> Go to All Applications
+          </button>
+          <button class="nav-item" (click)="runCmdKAction('create')">
+            <i class="fa-solid fa-plus"></i> Log New Application
+          </button>
+          <button class="nav-item" (click)="runCmdKAction('theme')">
+            <i class="fa-solid fa-circle-half-stroke"></i> Toggle Light/Dark Theme
+          </button>
+          <button class="nav-item" (click)="runCmdKAction('nav', 'account')">
+            <i class="fa-solid fa-user-gear"></i> Go to Account Management
+          </button>
+
+          @if (cmdKQuery.trim()) {
+            <div style="font-size: 11px; color: var(--text-tertiary); padding: 8px 8px 4px 8px; border-top: 1px solid var(--border-subtle); margin-top: 6px;">Filter Applications</div>
+            <button class="nav-item" (click)="runCmdKAction('search', cmdKQuery)">
+              <i class="fa-solid fa-building"></i> Filter by "{{ cmdKQuery }}"
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- DESTRUCTIVE CONFIRMATION MODALS (Phase 4 Liquid Glass) -->
+  @if (isDeleteDataOpen()) {
+    <div class="modal-overlay" (click)="isDeleteDataOpen.set(false)">
+      <div class="modal-content liquid-glass" (click)="$event.stopPropagation()">
+        <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 16px; color: var(--accent-danger);">Wipe Application Data</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 16px 0;">This will permanently delete all your logged job applications and uploaded resume versions. Type <strong>DELETE</strong> to confirm.</p>
+        
+        <input type="text" class="form-control" [(ngModel)]="deleteConfirmText" placeholder="Type DELETE" style="margin-bottom: 12px;">
+
+        @if (deleteError) {
+          <p style="font-size: 12px; color: var(--accent-danger); margin-bottom: 12px;">{{ deleteError }}</p>
+        }
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button class="btn btn-secondary" (click)="isDeleteDataOpen.set(false)">Cancel</button>
+          <button class="btn btn-primary" style="background: var(--accent-danger); color: #000;" (click)="wipeUserDataSubmit()">Wipe All Data</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (isDeleteAccountOpen()) {
+    <div class="modal-overlay" (click)="isDeleteAccountOpen.set(false)">
+      <div class="modal-content liquid-glass" (click)="$event.stopPropagation()">
+        <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 16px; color: var(--accent-danger);">Delete Account</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 16px 0;">This will permanently delete your user account and all associated application history. Type <strong>DELETE</strong> to confirm.</p>
+        
+        <input type="text" class="form-control" [(ngModel)]="deleteConfirmText" placeholder="Type DELETE" style="margin-bottom: 12px;">
+
+        @if (deleteError) {
+          <p style="font-size: 12px; color: var(--accent-danger); margin-bottom: 12px;">{{ deleteError }}</p>
+        }
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button class="btn btn-secondary" (click)="isDeleteAccountOpen.set(false)">Cancel</button>
+          <button class="btn btn-primary" style="background: var(--accent-danger); color: #000;" (click)="wipeAccountSubmit()">Permanently Delete Account</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- LOG APPLICATION MODAL (Full Liquid Glass) -->
   @if (isCreateOpen()) {
     <div class="modal-overlay" (click)="closeCreateModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-content liquid-glass" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h2>Log Application</h2>
+          <h3 style="margin: 0; font-size: 16px; font-weight: 600;">Log New Application</h3>
           <button class="close-btn" (click)="closeCreateModal()">&times;</button>
         </div>
-        
-        <form (submit)="createApplication(); $event.preventDefault()">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Company *</label>
-              <input type="text" class="form-control" name="company" [(ngModel)]="newApp.company" required placeholder="Acme Corp">
-            </div>
-            <div class="form-group">
-              <label>Role *</label>
-              <input type="text" class="form-control" name="role" [(ngModel)]="newApp.role" required placeholder="Software Engineer">
-            </div>
+
+        <form (submit)="createApplicationSubmit(); $event.preventDefault()">
+          <div class="form-group">
+            <label for="company">Company Name</label>
+            <input type="text" id="company" class="form-control" [(ngModel)]="newApp.company" name="company" required placeholder="e.g. Stripe">
+          </div>
+
+          <div class="form-group">
+            <label for="role">Job Title / Role</label>
+            <input type="text" id="role" class="form-control" [(ngModel)]="newApp.role" name="role" required placeholder="e.g. Senior Frontend Engineer">
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label>Date Applied *</label>
-              <input type="date" class="form-control" name="dateApplied" [(ngModel)]="newApp.dateApplied" required>
+              <label for="dateApplied">Date Applied</label>
+              <input type="date" id="dateApplied" class="form-control" [(ngModel)]="newApp.dateApplied" name="dateApplied">
             </div>
             <div class="form-group">
-              <label>Location</label>
-              <input type="text" class="form-control" name="location" [(ngModel)]="newApp.location" placeholder="Hyderabad / Remote">
+              <label for="location">Location</label>
+              <input type="text" id="location" class="form-control" [(ngModel)]="newApp.location" name="location" placeholder="Remote / San Francisco">
             </div>
           </div>
 
           <div class="form-group">
-            <label>Source</label>
-            <select class="form-control" name="source" [(ngModel)]="newApp.source">
+            <label for="source">Source</label>
+            <select id="source" class="form-control" [(ngModel)]="newApp.source" name="source">
               <option value="LinkedIn">LinkedIn</option>
               <option value="Indeed">Indeed</option>
+              <option value="Company Site">Company Site</option>
               <option value="Referral">Referral</option>
-              <option value="Company Website">Company Website</option>
-              <option value="Campus Placement">Campus Placement</option>
-              <option value="Cold Outreach">Cold Outreach</option>
+              <option value="Other">Other</option>
             </select>
           </div>
 
           <div class="form-group">
-            <label>Job Description (Raw Text - For AI Fit Score)</label>
-            <textarea class="form-control" name="jobDescription" [(ngModel)]="newApp.jobDescription" rows="4" placeholder="Paste full JD details here..."></textarea>
+            <label for="jobDescription">Job Description (Optional)</label>
+            <textarea id="jobDescription" class="form-control" [(ngModel)]="newApp.jobDescription" name="jobDescription" rows="3" placeholder="Paste requirements for AI alignment check..."></textarea>
           </div>
 
-          <div class="form-group">
-            <label>Notes</label>
-            <textarea class="form-control" name="notes" [(ngModel)]="newApp.notes" rows="2" placeholder="e.g. recruiter name, referral contact info..."></textarea>
-          </div>
-
-          <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+          <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
             <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Log Job</button>
+            <button type="submit" class="btn btn-primary">Save Application</button>
           </div>
         </form>
       </div>
     </div>
   }
 
-  <!-- DETAIL SLIDEOVER PANEL -->
+  <!-- DETAIL SLIDEOVER PANEL (Liquid Glass) -->
   @if (isDetailOpen() && selectedApp()) {
     <div class="slideover-overlay" (click)="closeDetailModal()">
       <div class="slideover-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
           <div>
-            <h2 style="margin-bottom: 4px;">{{ selectedApp().company }}</h2>
-            <p style="margin: 0; font-size: 14px; color: var(--text-secondary);">{{ selectedApp().role }} &bull; {{ selectedApp().location }}</p>
+            <h2 style="margin-bottom: 4px; font-size: 18px;">{{ selectedApp().company }}</h2>
+            <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">{{ selectedApp().role }} &bull; {{ selectedApp().location || 'Remote' }}</p>
           </div>
           <button class="close-btn" (click)="closeDetailModal()">&times;</button>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 24px; margin-top: 20px;">
-          <!-- Status controls -->
+        <div style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px;">
           <div>
-            <h4 style="margin-top: 0; margin-bottom: 10px;">Update Stage</h4>
-            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            <h4 style="margin-top: 0; margin-bottom: 10px; font-size: 13px;">Update Stage</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 6px;">
               @for (stage of ['applied', 'screening', 'interview', 'offer', 'rejected', 'ghosted']; track stage) {
-                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 11px; text-transform: uppercase;" [class.btn-primary]="selectedApp().status === stage" (click)="updateAppStatus(selectedApp()._id, stage)">
+                <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px; text-transform: uppercase;" [class.btn-primary]="selectedApp().status === stage" (click)="updateAppStatus(selectedApp()._id, stage)">
                   {{ stage }}
                 </button>
               }
             </div>
           </div>
 
-          <!-- AI Fit Scoring panel -->
+          <!-- AI Fit Score -->
           @if (selectedApp().fitScore?.score !== null) {
-            <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
-              <h4 style="margin-top: 0; margin-bottom: 12px;">AI Fit Score Analysis</h4>
-              
-              <div style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37, 99, 235, 0.1); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                  <span style="font-size: 13px; color: var(--text-secondary); font-weight: 500;">Match Verdict</span>
-                  <span class="badge" [class.badge-offer]="selectedApp().fitScore.verdict === 'STRONG_MATCH'" [class.badge-interview]="selectedApp().fitScore.verdict === 'COIN_FLIP'" [class.badge-rejected]="selectedApp().fitScore.verdict === 'REACH'">
-                    {{ selectedApp().fitScore.score }}% &bull; {{ selectedApp().fitScore.verdict }}
-                  </span>
-                </div>
-                
-                @if (selectedApp().fitScore.lowConfidence) {
-                  <div style="display: flex; gap: 8px; align-items: center; font-size: 11px; background: rgba(217, 119, 6, 0.08); border: 1px dashed rgba(217, 119, 6, 0.2); padding: 8px; border-radius: 6px; color: #d97706; margin-bottom: 12px;">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    <span>Low confidence alert: LLM evaluation and keyword overlap score diverged significantly.</span>
-                  </div>
-                }
-
-                <p style="font-size: 13px; line-height: 1.5; margin: 0 0 12px 0; color: var(--text-secondary);">
-                  {{ selectedApp().fitScore.rationale }}
-                </p>
-
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px;">
-                  <div>
-                    <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">Matched Tech</span>
-                    <div class="skills-list">
-                      @for (skill of selectedApp().fitScore.matchedSkills; track skill) {
-                        <span class="skill-tag skill-tag-matched">{{ skill }}</span>
-                      } @empty {
-                        <span style="font-size: 12px; color: var(--text-muted);">None detected.</span>
-                      }
-                    </div>
-                  </div>
-                  <div>
-                    <span style="display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px;">Missing Tech</span>
-                    <div class="skills-list">
-                      @for (skill of selectedApp().fitScore.missingSkills; track skill) {
-                        <span class="skill-tag skill-tag-missing">{{ skill }}</span>
-                      } @empty {
-                        <span style="font-size: 12px; color: var(--text-muted);">None detected.</span>
-                      }
-                    </div>
-                  </div>
-                </div>
+            <div style="background: var(--bg-surface-raised); border: 1px solid var(--border-subtle); padding: 14px; border-radius: var(--border-radius-sm);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-size: 12px; color: var(--text-secondary);">AI Verdict</span>
+                <span class="pill-badge pill-offer num-tabular">{{ selectedApp().fitScore.score }}% &bull; {{ selectedApp().fitScore.verdict }}</span>
               </div>
+              <p style="font-size: 12px; margin: 0; color: var(--text-secondary); line-height: 1.4;">{{ selectedApp().fitScore.rationale }}</p>
             </div>
           }
 
-          <!-- Run score controls -->
-          <div style="background: rgba(255, 255, 255, 0.02); padding: 16px; border-radius: 12px; border: 1px solid var(--border-color);">
-            <div style="margin-bottom: 12px;">
-              <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: var(--text-secondary);">
-                <input type="checkbox" [(ngModel)]="usePastedText"> Paste CV text manually instead of using file
-              </label>
-            </div>
-            
-            @if (usePastedText) {
-              <textarea class="form-control" [(ngModel)]="pastedCvText" rows="3" placeholder="Paste full resume text..." style="margin-bottom: 12px; font-size: 12px;"></textarea>
-            } @else {
-              <div class="form-group" style="margin-bottom: 12px;">
-                <label style="font-size: 11px;">Select Resume Version</label>
-                <select id="resumeSelect" class="form-control" style="font-size: 13px;">
-                  @for (resume of resumes(); track resume._id) {
-                    <option [value]="resume._id" [selected]="selectedApp().resumeId === resume._id">{{ resume.fileName }}</option>
-                  } @empty {
-                    <option value="">No resumes found. Paste CV instead or upload a resume in Settings.</option>
-                  }
-                </select>
-              </div>
-            }
-
-            <button class="btn btn-primary" (click)="triggerFitCheck(selectedApp()._id)" [disabled]="runningFitCheck() || (!usePastedText && resumes().length === 0)" style="width: 100%;">
-              {{ runningFitCheck() ? 'AI evaluating alignment...' : 'Run AI Fit Check' }}
-            </button>
+          <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+            <button class="btn btn-secondary" style="color: var(--accent-danger); margin-right: auto;" (click)="deleteApplication(selectedApp()._id)">Delete</button>
+            <button class="btn btn-secondary" (click)="closeDetailModal()">Close</button>
           </div>
-
-          <!-- Notes -->
-          <div>
-            <h4 style="margin-bottom: 6px;">Notes</h4>
-            <p style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 12px; border-radius: 10px; font-size: 13px; line-height: 1.5; color: var(--text-secondary); margin: 0; white-space: pre-wrap;">
-              {{ selectedApp().notes || 'No notes written yet.' }}
-            </p>
-          </div>
-
-          <!-- Job Description -->
-          <div>
-            <h4 style="margin-bottom: 6px;">Job Description</h4>
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); max-height: 150px; overflow-y: auto; padding: 12px; border-radius: 10px; font-size: 12px; line-height: 1.5; color: var(--text-secondary); white-space: pre-wrap;">
-              {{ selectedApp().jobDescription || 'No description pasted.' }}
-            </div>
-          </div>
-
-          <!-- Timeline Audit History -->
-          <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
-            <h4 style="margin-top: 0; margin-bottom: 14px;">Audit History</h4>
-            <div class="timeline">
-              @for (log of selectedApp().statusHistory; track $index; let isLast = $last) {
-                <div class="timeline-item">
-                  <div class="timeline-dot" [class.active]="isLast"></div>
-                  <div class="timeline-info">
-                    <div class="timeline-header">
-                      <span class="badge badge-{{ log.status }}" style="padding: 2px 6px; font-size: 9px;">{{ log.status }}</span>
-                      <span class="timeline-date">{{ log.changedAt | date:'shortDate' }}</span>
-                    </div>
-                    <span class="timeline-reason">{{ log.reason }}</span>
-                  </div>
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-
-        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 20px;">
-          <button class="btn btn-secondary" style="border-color: rgba(220, 38, 38, 0.15); color: #f87171; margin-right: auto;" (click)="deleteApplication(selectedApp()._id)">
-            Delete Application
-          </button>
-          <button class="btn btn-secondary" (click)="closeDetailModal()">Close</button>
         </div>
       </div>
     </div>
