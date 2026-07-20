@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment Variables & Secrets
+.env
+.env.*
+*.env
+backend/.env
+frontend/.env
+*.pem
+*.key
+
+# Build outputs
+dist/
+frontend/dist/
+frontend/.angular/
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# Terraform files & state
+terraform/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform.lock.hcl
+
+# System & IDE files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
