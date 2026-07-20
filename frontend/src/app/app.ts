@@ -80,6 +80,7 @@ export class App implements OnInit {
 
   // Auth Page Form Models
   protected authMode = signal<'login' | 'signup'>('login');
+  protected showPassword = signal<boolean>(false);
   protected authEmail = '';
   protected authPassword = '';
   protected authError = '';

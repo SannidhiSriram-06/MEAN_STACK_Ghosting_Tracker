@@ -887,25 +887,234 @@ body {
   color: var(--text-secondary);
 }
 
+.vercel-command-footer kbd {
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
 /* ==========================================================================
    Skiper63 — Apple Squircle Effect
-   Smooth superellipse curvature & organic corner filter
+   Target ONLY outer container panels to ensure text on buttons and nav items
+   is crisp and readable at all times!
    ========================================================================== */
 
-.apple-squircle,
-.stat-card,
 .glass-panel,
-.kanban-card,
-.kanban-column,
 .modal-content,
-.btn,
-.nav-item.active {
+.apple-squircle {
   corner-shape: superellipse;
   border-radius: var(--border-radius);
   filter: url(#SkiperSquiCircleFilterLayout);
 }
 
+/* Crisp Squircle Buttons & Nav Items (No SVG Blur) */
+.btn,
+.stat-card,
+.kanban-card,
+.kanban-column,
+.nav-item,
 .pill-badge {
   corner-shape: superellipse;
-  border-radius: 99px;
+  border-radius: var(--border-radius);
+}
+
+/* ==========================================================================
+   Collapsible Sidebar Support
+   ========================================================================== */
+.sidebar {
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), padding 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar.collapsed {
+  width: 68px !important;
+  padding: 16px 8px;
+}
+
+.sidebar.collapsed .logo span,
+.sidebar.collapsed .nav-item span,
+.sidebar.collapsed .user-info {
+  display: none !important;
+}
+
+.sidebar.collapsed .logo {
+  justify-content: center;
+  padding: 0;
+}
+
+.sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.sidebar.collapsed .user-profile {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  background: var(--bg-surface);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-collapse-btn:hover {
+  background: var(--bg-surface-raised);
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+   Watermelon UI Auth-13 System
+   ========================================================================== */
+.auth-13-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-base);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-13-glow {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(165, 180, 252, 0.14) 0%, rgba(251, 207, 232, 0.06) 50%, transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  filter: blur(60px);
+}
+
+.auth-13-card {
+  width: 420px;
+  max-width: 90vw;
+  padding: 36px 32px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  position: relative;
+  z-index: 2;
+}
+
+.auth-13-tabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px;
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 24px;
+}
+
+.auth-13-tab {
+  flex: 1;
+  text-align: center;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-13-tab.active {
+  background: var(--bg-surface-raised);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.auth-sso-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-sm);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.auth-sso-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-glass);
+}
+
+/* ==========================================================================
+   Skiper57 Vercel Navigation Bar
+   ========================================================================== */
+.vercel-nav-bar {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-base);
+  border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(16px);
+}
+
+.vercel-nav-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.vercel-nav-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 24px;
+  overflow-x: auto;
+}
+
+.vercel-nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s ease;
+}
+
+.vercel-nav-tab:hover {
+  color: var(--text-primary);
+}
+
+.vercel-nav-tab.active {
+  color: var(--text-primary);
+}
+
+.vercel-nav-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-primary);
+  border-radius: 2px 2px 0 0;
 }
