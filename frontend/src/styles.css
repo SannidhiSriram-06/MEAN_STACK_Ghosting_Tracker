@@ -886,3 +886,26 @@ body {
   font-size: 10px;
   color: var(--text-secondary);
 }
+
+/* ==========================================================================
+   Skiper63 — Apple Squircle Effect
+   Smooth superellipse curvature & organic corner filter
+   ========================================================================== */
+
+.apple-squircle,
+.stat-card,
+.glass-panel,
+.kanban-card,
+.kanban-column,
+.modal-content,
+.btn,
+.nav-item.active {
+  corner-shape: superellipse;
+  border-radius: var(--border-radius);
+  filter: url(#SkiperSquiCircleFilterLayout);
+}
+
+.pill-badge {
+  corner-shape: superellipse;
+  border-radius: 99px;
+}
