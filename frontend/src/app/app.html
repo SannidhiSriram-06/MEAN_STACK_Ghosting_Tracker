@@ -81,7 +81,7 @@
   <!-- Main Application Shell -->
   <div class="app-container">
     
-    <!-- Sidebar Navigation (Claude-Desktop Style + Collapsible Option) -->
+    <!-- Sidebar Navigation (PRIMARY APP SHELL NAV) -->
     <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
       <div class="logo" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -141,61 +141,60 @@
     <!-- Main Scrollable Screen -->
     <main class="main-content" style="padding: 0; display: flex; flex-direction: column;">
       
-      <!-- Skiper57 Vercel Navigation Bar -->
-      <nav class="vercel-nav-bar">
-        <div class="vercel-nav-top">
-          <div style="font-size: 12px; color: var(--text-tertiary); display: flex; align-items: center; gap: 8px;">
+      <!-- Vercel-Style Contextual Top Header Bar (NON-REDUNDANT TOOLBAR) -->
+      <header class="header-bar" style="padding: 12px 24px; border-bottom: 1px solid var(--border-subtle); background: var(--bg-base); position: sticky; top: 0; z-index: 100; backdrop-filter: blur(16px);">
+        <!-- Left: Live Breadcrumb Trail & View Title -->
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="font-size: 13px; color: var(--text-tertiary); display: flex; align-items: center; gap: 8px;">
             <span style="color: var(--text-primary); font-weight: 600;">JobTrack</span>
             <i class="fa-solid fa-chevron-right" style="font-size: 9px;"></i>
             <span style="color: var(--text-secondary); font-weight: 500;">Personal Workspace</span>
             <i class="fa-solid fa-chevron-right" style="font-size: 9px;"></i>
-            <span style="color: var(--accent-primary); text-transform: capitalize;">{{ activeTab() }}</span>
+            <span style="color: var(--accent-primary); text-transform: capitalize; font-weight: 600;">{{ activeTab() }}</span>
           </div>
 
-          <div class="header-actions">
-            <!-- Skiper92 Vercel Command Search Trigger -->
-            <button class="btn btn-secondary" (click)="toggleCmdK()" style="padding: 6px 12px; font-size: 12px; gap: 8px;">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              <span>Search...</span>
-              <span style="display: flex; gap: 4px;">
-                <kbd style="background: rgba(255,255,255,0.08); padding: 2px 5px; border-radius: 4px; font-size: 10px;">F</kbd>
-                <kbd style="background: rgba(255,255,255,0.08); padding: 2px 5px; border-radius: 4px; font-size: 10px;">⌘K</kbd>
-              </span>
-            </button>
-
-            <!-- Skiper4 SVG Morphing Theme Toggle Component -->
-            <app-theme-toggle></app-theme-toggle>
-
-            <!-- Subdued AWS Status indicator -->
-            <div class="aws-config-status" [class.aws-status-active]="auth.isCognitoConfigured()" [class.aws-status-mock]="!auth.isCognitoConfigured()">
-              {{ auth.isCognitoConfigured() ? 'AWS Active' : 'Local Mock' }}
-            </div>
-            
-            <button class="btn btn-primary" (click)="openCreateModal()">
-              <i class="fa-solid fa-plus"></i> Log Application
-            </button>
-          </div>
+          <span style="font-size: 11px; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,0.06); color: var(--text-secondary); font-weight: 500;">
+            @switch (activeTab()) {
+              @case ('dashboard') { {{ stats().totalApplications }} Applications Tracked }
+              @case ('kanban') { 6 Pipeline Stages }
+              @case ('applications') { Directory View }
+              @case ('settings') { System Integration }
+              @case ('account') { Data & Security }
+            }
+          </span>
         </div>
+        
+        <!-- Right: Actions, Search, Ghosting Scanner, Theme Toggle, & Log Button -->
+        <div class="header-actions" style="gap: 10px;">
+          <!-- Ghosting Scan Quick Action -->
+          <button class="btn btn-secondary" (click)="triggerGhostCheck()" style="padding: 6px 12px; font-size: 12px; gap: 6px;" title="Scan applications for ghosting triggers">
+            <i class="fa-solid fa-ghost" style="color: var(--accent-warning);"></i>
+            <span>Scan Ghosting</span>
+          </button>
 
-        <!-- Skiper57 Vercel Sub-nav Tabs -->
-        <div class="vercel-nav-tabs">
-          <div class="vercel-nav-tab" [class.active]="activeTab() === 'dashboard'" (click)="changeTab('dashboard')">
-            <i class="fa-solid fa-chart-simple" style="font-size: 12px;"></i> Dashboard
+          <!-- Skiper92 Vercel Command Search Trigger -->
+          <button class="btn btn-secondary" (click)="toggleCmdK()" style="padding: 6px 12px; font-size: 12px; gap: 8px;">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Search...</span>
+            <span style="display: flex; gap: 4px;">
+              <kbd style="background: rgba(255,255,255,0.08); padding: 2px 5px; border-radius: 4px; font-size: 10px;">F</kbd>
+              <kbd style="background: rgba(255,255,255,0.08); padding: 2px 5px; border-radius: 4px; font-size: 10px;">⌘K</kbd>
+            </span>
+          </button>
+
+          <!-- Skiper4 SVG Morphing Theme Toggle Component -->
+          <app-theme-toggle></app-theme-toggle>
+
+          <!-- Subdued AWS Status indicator -->
+          <div class="aws-config-status" [class.aws-status-active]="auth.isCognitoConfigured()" [class.aws-status-mock]="!auth.isCognitoConfigured()">
+            {{ auth.isCognitoConfigured() ? 'AWS Active' : 'Local Mock' }}
           </div>
-          <div class="vercel-nav-tab" [class.active]="activeTab() === 'kanban'" (click)="changeTab('kanban')">
-            <i class="fa-solid fa-table-columns" style="font-size: 12px;"></i> Kanban Pipeline
-          </div>
-          <div class="vercel-nav-tab" [class.active]="activeTab() === 'applications'" (click)="changeTab('applications')">
-            <i class="fa-solid fa-list-check" style="font-size: 12px;"></i> All Applications
-          </div>
-          <div class="vercel-nav-tab" [class.active]="activeTab() === 'settings'" (click)="changeTab('settings'); loadCognitoConfig()">
-            <i class="fa-solid fa-gears" style="font-size: 12px;"></i> Settings
-          </div>
-          <div class="vercel-nav-tab" [class.active]="activeTab() === 'account'" (click)="changeTab('account')">
-            <i class="fa-solid fa-user-gear" style="font-size: 12px;"></i> Account & Data
-          </div>
+          
+          <button class="btn btn-primary" (click)="openCreateModal()">
+            <i class="fa-solid fa-plus"></i> Log Application
+          </button>
         </div>
-      </nav>
+      </header>
 
       <!-- View Container Body -->
       <div style="padding: 24px; flex: 1;">
@@ -453,7 +452,7 @@
         <!-- VIEW 5: ACCOUNT MANAGEMENT -->
         @if (activeTab() === 'account') {
           <div style="display: flex; flex-direction: column; gap: 24px; max-width: 800px;">
-            <!-- Export Data Panel (CRISP BUTTON TEXT, NO BLOBS/DOTS!) -->
+            <!-- Export Data Panel -->
             <div class="glass-panel">
               <h3 style="margin-top: 0; margin-bottom: 6px; font-size: 15px; font-weight: 600;">Export My Data</h3>
               <p style="font-size: 13px; color: var(--text-secondary); margin: 0 0 16px 0;">Download a complete backup of all logged applications, statuses, and AI scores.</p>
