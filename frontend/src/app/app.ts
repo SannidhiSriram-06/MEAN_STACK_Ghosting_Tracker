@@ -87,10 +87,8 @@ export class App implements OnInit {
   protected authPassword = '';
   protected authError = '';
 
-  // Cognito Configuration Input Model
-  protected cognitoUserPoolId = '';
-  protected cognitoClientId = '';
-  protected cognitoRegion = 'us-east-1';
+  // Clerk Configuration Input Model
+  protected clerkPemPublicKey = '';
 
   // File Upload State
   protected selectedFile: File | null = null;
@@ -499,17 +497,15 @@ export class App implements OnInit {
     });
   }
 
-  // Load Cognito config from auth service (uses canonical snake_case localStorage keys)
-  protected loadCognitoConfig() {
-    const config = this.auth.getCognitoConfig();
-    this.cognitoUserPoolId = config.userPoolId;
-    this.cognitoClientId = config.clientId;
-    this.cognitoRegion = config.region;
+  // Load Clerk config from auth service
+  protected loadClerkConfig() {
+    const config = this.auth.getClerkConfig();
+    this.clerkPemPublicKey = config.pemPublicKey;
   }
 
-  // Delegate save to auth service — single source of truth for key naming
-  protected saveCognitoConfig() {
-    this.auth.saveCognitoConfig(this.cognitoUserPoolId, this.cognitoClientId, this.cognitoRegion);
-    alert('Cognito parameters saved locally!');
+  // Delegate save to auth service
+  protected saveClerkConfig() {
+    this.auth.saveClerkConfig(this.clerkPemPublicKey);
+    alert('Clerk parameters saved locally!');
   }
 }

@@ -7,7 +7,7 @@ export class AuthService {
   // Signals for reactive state
   readonly isAuthenticated = signal<boolean>(false);
   readonly currentUser = signal<any>(null);
-  readonly isCognitoConfigured = signal<boolean>(false);
+  readonly isClerkConfigured = signal<boolean>(false);
 
   constructor() {
     this.checkInitialState();
@@ -16,9 +16,9 @@ export class AuthService {
   private checkInitialState() {
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
-    const hasAwsConfig = !!localStorage.getItem('cognito_user_pool_id');
+    const hasClerkConfig = !!localStorage.getItem('clerk_pem_public_key');
 
-    this.isCognitoConfigured.set(hasAwsConfig);
+    this.isClerkConfigured.set(hasClerkConfig);
 
     if (token) {
       this.isAuthenticated.set(true);
@@ -27,33 +27,27 @@ export class AuthService {
   }
 
   /**
-   * Updates AWS Cognito variables in local storage.
+   * Updates Clerk variables in local storage.
    */
-  saveCognitoConfig(userPoolId: string, clientId: string, region: string) {
-    if (userPoolId && clientId) {
-      localStorage.setItem('cognito_user_pool_id', userPoolId);
-      localStorage.setItem('cognito_client_id', clientId);
-      localStorage.setItem('cognito_region', region);
-      this.isCognitoConfigured.set(true);
+  saveClerkConfig(pemPublicKey: string) {
+    if (pemPublicKey) {
+      localStorage.setItem('clerk_pem_public_key', pemPublicKey);
+      this.isClerkConfigured.set(true);
     } else {
-      localStorage.removeItem('cognito_user_pool_id');
-      localStorage.removeItem('cognito_client_id');
-      localStorage.removeItem('cognito_region');
-      this.isCognitoConfigured.set(false);
+      localStorage.removeItem('clerk_pem_public_key');
+      this.isClerkConfigured.set(false);
     }
   }
 
-  getCognitoConfig() {
+  getClerkConfig() {
     return {
-      userPoolId: localStorage.getItem('cognito_user_pool_id') || '',
-      clientId: localStorage.getItem('cognito_client_id') || '',
-      region: localStorage.getItem('cognito_region') || 'us-east-1'
+      pemPublicKey: localStorage.getItem('clerk_pem_public_key') || ''
     };
   }
 
   /**
    * Signs in user.
-   * If Cognito details are set, we simulate authenticating or make actual Cognito calls.
+   * If Clerk details are set, we simulate authenticating or make actual Clerk calls.
    * Otherwise, we set mock token to proceed with local-first dev.
    */
   login(email: string, _password: string): Promise<boolean> {
@@ -68,7 +62,7 @@ export class AuthService {
   }
 
   signup(_email: string, _password: string): Promise<boolean> {
-    return Promise.resolve(true); // Mock signup — real Cognito integration replaces this
+    return Promise.resolve(true); // Mock signup
   }
 
   logout() {

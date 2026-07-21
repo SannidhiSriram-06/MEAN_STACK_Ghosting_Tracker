@@ -32,7 +32,7 @@ Explain any config choices (Docker networking, volume mounts, port mapping) in p
 Continuing JobTrack (MEAN-stack job tracker). Repo: https://github.com/SannidhiSriram-06/MEAN_STACK_Ghosting_Tracker
 Phase 1 (local Docker skeleton with working health-check) is done and working.
 
-This is Phase 2 of 6: Core CRUD. Goal: implement the Application model (per SCHEMA.md) and full CRUD REST API (per API_SPEC.md) in Express/Mongoose, tested via Postman/Thunder Client, THEN build the Angular side (application form + Kanban-style list view) against it. Use a hardcoded fake userId for now (e.g., a constant) — do not build real auth yet, that's Phase 6. Structure the fake-user lookup as a single small function/middleware (e.g., getUserId(req)) so swapping in real Cognito auth later is a one-file change.
+This is Phase 2 of 6: Core CRUD. Goal: implement the Application model (per SCHEMA.md) and full CRUD REST API (per API_SPEC.md) in Express/Mongoose, tested via Postman/Thunder Client, THEN build the Angular side (application form + Kanban-style list view) against it. Use a hardcoded fake userId for now (e.g., a constant) — do not build real auth yet, that's Phase 6. Structure the fake-user lookup as a single small function/middleware (e.g., getUserId(req)) so swapping in real Clerk auth later is a one-file change.
 
 Walk me through this step by step:
 1. Mongoose Application schema matching SCHEMA.md exactly
@@ -116,25 +116,25 @@ Also give me a plain-English walkthrough of one aggregation pipeline (pick the s
 
 ---
 
-## PHASE 6 — AWS Integration (Cognito auth + S3 resume storage)
+## PHASE 6 — Clerk Integration & Vercel Config
 
 ```
 Continuing JobTrack (MEAN-stack job tracker). Repo: https://github.com/SannidhiSriram-06/MEAN_STACK_Ghosting_Tracker
-Phase 5 (stats dashboard + skill-gap aggregation) is done and working. The app currently uses a fake hardcoded userId and pasted CV/JD text with no file upload.
+Phase 5 (stats dashboard + skill-gap aggregation) is done and working. The app currently uses a fake hardcoded userId and pasted CV/JD text.
 
-This is Phase 6 of 6: AWS Integration. Goal per PRD.md/TECHSTACK.md: swap the fake-userId middleware for real AWS Cognito authentication (user pool, JWT verification middleware, Angular login flow + route guards + auth interceptor), and add real CV file upload — multer → S3 storage → pdf-parse text extraction cached on ResumeVersion per SCHEMA.md — replacing the pasted-text fit-check input.
+This is Phase 6 of 6: Clerk & Vercel Integration. Goal: swap the fake-userId middleware for real Clerk authentication (JWT verification middleware, Angular login flow + auth interceptor), and add real CV file upload — parsing PDF via pdf-parse directly in-memory and caching the extracted text in MongoDB ResumeVersion collection, eliminating any S3 binary upload since we are deploying to a serverless Vercel backend.
 
-Walk me through this step by step, staying strictly within AWS Free Tier (Cognito up to 50k MAUs, S3 5GB/12mo):
-1. Creating a Cognito User Pool + App Client in the AWS Console (or CLI), and what config choices matter (no unnecessary attributes, simple email+password flow)
-2. Backend: JWT verification middleware using the Cognito user pool's public keys, replacing the fake getUserId(req) function from Phase 2 with real token-derived user identity — confirm this is a small, isolated change since that function was built to be swappable
-3. Angular: login/signup flow, auth interceptor attaching the token, route guards on protected routes
-4. Creating an S3 bucket (correct region, minimal public access, folder-per-user key prefix), IAM policy for least-privilege backend access, and wiring multer → S3 upload → pdf-parse extraction → cache on ResumeVersion.extractedText
-5. Updating the fit-check flow to pull CV text from a selected ResumeVersion instead of pasted text
-6. Final docker-compose/env var checklist so the whole app still boots with `docker-compose up` end to end, now with real AWS config
+Walk me through this step by step:
+1. Setting up a Clerk account, retrieving the Frontend API keys, and setting the PEM public key as an environment variable (never exposing private keys to frontend)
+2. Backend: JWT verification middleware using jsonwebtoken and jwks-rsa to validate Clerk sessions, extracting user ID (clerk user sub) and details to populate req.user
+3. Angular: Integration of Clerk auth interceptor attaching the bearer token to api calls, login routing redirection
+4. PDF parsing: multer -> pdf-parse text extraction in-memory -> cache on ResumeVersion.extractedText in Mongoose
+5. Updating the fit-check flow to pull CV text from the selected ResumeVersion instead of pasted text
+6. Final Vercel configuration (`vercel.json`) and environment variable setup for deployment
 
-I'm using [Cursor/Windsurf/Gemini CLI] as my AI coding IDE. For each step, give me a labeled, copy-pasteable IDE prompt referencing SCHEMA.md, API_SPEC.md, TECHSTACK.md, and .cursorrules, instead of writing full code yourself. After each prompt, tell me exactly how to test it (including how to avoid accidentally exceeding free-tier limits during testing).
+I'm using [Cursor/Windsurf/Gemini CLI] as my AI coding IDE. For each step, give me a labeled, copy-pasteable IDE prompt referencing SCHEMA.md, API_SPEC.md, TECHSTACK.md, and .cursorrules, instead of writing full code yourself. After each prompt, tell me exactly how to test it.
 
-Finish with a short summary I can use as a viva answer for "why Cognito instead of hand-rolled JWT" and "why S3 instead of storing files in Mongo."
+Finish with a short summary I can use as a viva answer for "why Clerk instead of Cognito or hand-rolled JWT" and "why in-memory PDF parsing and text caching instead of binary S3 uploads in serverless environments."
 ```
 
 ---

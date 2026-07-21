@@ -1,12 +1,12 @@
 # JobTrack — MEAN-Stack Job Application & Ghosting Tracker
 
-[![Project Completion](https://img.shields.io/badge/Project_Completion-95%25-brightgreen.svg)](#progress-tracker)
 [![Framework](https://img.shields.io/badge/Frontend-Angular_21-dd0031.svg)](https://angular.dev)
 [![Backend](https://img.shields.io/badge/Backend-Express_Node20-68a063.svg)](https://nodejs.org)
 [![Database](https://img.shields.io/badge/Database-MongoDB_7-47a248.svg)](https://mongodb.com)
-[![Cloud](https://img.shields.io/badge/AWS-ECS_Fargate_Terraform-ff9900.svg)](https://aws.amazon.com)
+[![Auth](https://img.shields.io/badge/Auth-Clerk-6C47FF.svg)](https://clerk.com)
+[![Deployment](https://img.shields.io/badge/Deployment-Vercel-000000.svg)](https://vercel.com)
 
-**JobTrack** is an enterprise-grade MEAN-stack job search portal designed to automate application tracking, detect recruiter ghosting via daily background cron scans, evaluate resume alignment using LLM-powered Groq fit-checks, and deploy serverlessly on AWS ECS Fargate with Terraform IaC.
+**JobTrack** is an enterprise-grade MEAN-stack job search portal designed to automate application tracking, detect recruiter ghosting via daily background cron scans, evaluate resume alignment using LLM-powered Groq fit-checks, authenticate users via Clerk, and deploy serverlessly on Vercel.
 
 ---
 
@@ -19,11 +19,8 @@
 | **Phase 3: Automated Ghosting Scanner** | Daily `node-cron` background scanner marking stale applications | `COMPLETED` | 100% |
 | **Phase 4: Groq AI Fit-Check Engine** | LLaMA 3.3 fit-check parser with deterministic keyword overlap fallback | `COMPLETED` | 100% |
 | **Phase 5: Insights & Aggregations** | MongoDB aggregation pipelines for response rates, speed, and skill gaps | `COMPLETED` | 100% |
-| **Phase 6: AWS Security & Mock Fallbacks** | Cognito JWT verification with local fallbacks and S3 resume uploader | `COMPLETED` | 100% |
-| **UI/UX Overhaul (Anti-AI Slop)** | Plus Jakarta Sans font, Steel-Blue/Teal theme, dynamic SVG charts & Slide-Over | `COMPLETED` | 100% |
-| **AWS Terraform IaC Provisioning** | VPC, S3, EFS, ECR, Cognito User Pool, and ECS Cluster resources | `IN PROGRESS` | **85%** *(25/31 resources created; final apply pending DNS update)* |
-
-> **Current Overall Status**: **95% Complete**. Ready for local usage out-of-the-box. AWS serverless container deployment ready for final apply step.
+| **Phase 6: Clerk Auth & Vercel Config** | Clerk JWT verification with local mock fallbacks and Vercel serverless configuration | `COMPLETED` | 100% |
+| **UI/UX Overhaul** | Plus Jakarta Sans font, Steel-Blue/Teal theme, dynamic SVG charts & Slide-Over | `COMPLETED` | 100% |
 
 ---
 
@@ -52,25 +49,24 @@ npm start
 ## 🏗️ Architecture & Infrastructure
 
 ```
-                               ┌────────────────────────────────┐
-                               │     Angular 21 Web Portal      │
-                               │   (Plus Jakarta Sans / Signals)│
-                               └───────────────┬────────────────┘
-                                               │ HTTP / REST (JWT)
-                                               ▼
-                               ┌────────────────────────────────┐
-                               │     Express Node 20 API        │
-                               │  - Auth Middleware (Cognito)   │
-                               │  - Ghosting Cron (node-cron)   │
-                               │  - AI Scoring (Groq LLaMA)     │
-                               └───────┬───────────────┬────────┘
-                                       │               │
-                      ┌────────────────┘               └────────────────┐
-                      ▼                                                 ▼
-        ┌───────────────────────────┐                     ┌───────────────────────────┐
-        │       MongoDB 7 DB        │                     │   AWS S3 Resume Bucket    │
-        │  (Status / Skill Aggs)    │                     │   (Private User Uploads)  │
-        └───────────────────────────┘                     └───────────────────────────┘
+                                ┌────────────────────────────────┐
+                                │     Angular 21 Web Portal      │
+                                │  (Plus Jakarta Sans / Signals) │
+                                └───────────────┬────────────────┘
+                                                │ HTTP / REST (Clerk JWT)
+                                                ▼
+                                ┌────────────────────────────────┐
+                                │      Express Node 20 API       │
+                                │   - Auth Middleware (Clerk)    │
+                                │   - Ghosting Cron (node-cron)  │
+                                │   - AI Scoring (Groq LLaMA)    │
+                                └───────────────┬────────────────┘
+                                                │
+                                                ▼
+                                ┌───────────────────────────┐
+                                │       MongoDB 7 DB        │
+                                │   (Status / Skill Aggs)   │
+                                └───────────────────────────┘
 ```
 
 ---
@@ -79,7 +75,8 @@ npm start
 * **Frontend**: Angular 21 (Standalone Components, Signals, Vanilla Glassmorphism CSS)
 * **Backend**: Node.js 20 (Express CommonJS, Mongoose, node-cron, Multer, PDF-Parse)
 * **AI Engine**: Groq API (`llama-3.3-70b-versatile`) with deterministic fallback
-* **Cloud Infrastructure**: AWS ECS Fargate, ECR, S3, Cognito User Pool, AWS EFS, Terraform IaC
+* **Deployment**: Vercel Serverless Functions
+* **Authentication**: Clerk JWT Verification
 
 ---
 
@@ -91,9 +88,6 @@ MONGO_URI=mongodb://localhost:27017/jobtrack
 GROQ_API_KEY=your_groq_key_here
 GHOST_THRESHOLD_DAYS=10
 
-# AWS Credentials (Optional for Local Mock Mode)
-COGNITO_USER_POOL_ID=
-COGNITO_CLIENT_ID=
-S3_BUCKET_NAME=
-AWS_REGION=us-east-1
+# Clerk Configuration (Optional for Local Mock Mode)
+CLERK_PEM_PUBLIC_KEY=
 ```

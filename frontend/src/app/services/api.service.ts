@@ -11,7 +11,7 @@ export class ApiService {
 
   // Auth header helper
   private getHeaders(): HttpHeaders {
-    // If Cognito auth token is stored in local storage, append it
+    // If Clerk auth token is stored in local storage, append it
     const token = localStorage.getItem('token');
     if (token) {
       return new HttpHeaders({

@@ -1,26 +1,16 @@
-const { CognitoJwtVerifier } = require('aws-jwt-verify');
+const jwt = require('jsonwebtoken');
 
-let verifier = null;
-const isCognitoEnabled = process.env.COGNITO_USER_POOL_ID && process.env.COGNITO_CLIENT_ID;
+const clerkPemKey = process.env.CLERK_PEM_PUBLIC_KEY;
+const isClerkEnabled = !!clerkPemKey;
 
-if (isCognitoEnabled) {
-  try {
-    verifier = CognitoJwtVerifier.create({
-      userPoolId: process.env.COGNITO_USER_POOL_ID,
-      tokenUse: 'access',
-      clientId: process.env.COGNITO_CLIENT_ID,
-    });
-    console.log('Cognito JWT verifier initialized successfully.');
-  } catch (error) {
-    console.error('Failed to initialize Cognito JWT verifier:', error);
-  }
+if (isClerkEnabled) {
+  console.log('Clerk Auth initialized successfully using PEM Public Key.');
 } else {
-  console.log('Cognito details missing from environment variables. Running in MOCK AUTH mode.');
+  console.log('CLERK_PEM_PUBLIC_KEY missing from environment variables. Running in MOCK AUTH mode.');
 }
 
 const authMiddleware = async (req, res, next) => {
-  // If Cognito is not enabled, use mock auth
-  if (!isCognitoEnabled || verifier === null) {
+  if (!isClerkEnabled) {
     req.user = {
       id: 'mock-user-123',
       email: 'student@example.edu',
@@ -36,19 +26,30 @@ const authMiddleware = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    // Verify token
-    const payload = await verifier.verify(token);
     
-    // Attach Cognito user sub (ID) and details to request object
+    // Format the PEM key to ensure it has correct headers/newlines
+    let formattedKey = clerkPemKey.trim();
+    if (!formattedKey.includes('-----BEGIN PUBLIC KEY-----')) {
+      // Replace space placeholders with actual newlines if the user pasted it in a single line
+      const cleanKey = formattedKey.replace(/\\n/g, '\n');
+      if (cleanKey.includes('-----BEGIN PUBLIC KEY-----')) {
+        formattedKey = cleanKey;
+      } else {
+        formattedKey = `-----BEGIN PUBLIC KEY-----\n${formattedKey.match(/.{1,64}/g).join('\n')}\n-----END PUBLIC KEY-----`;
+      }
+    }
+
+    const payload = jwt.verify(token, formattedKey, { algorithms: ['RS256'] });
+    
     req.user = {
       id: payload.sub,
-      email: payload.username || payload.email || '',
+      email: payload.email || '',
       claims: payload
     };
     
     next();
   } catch (error) {
-    console.error('Cognito token validation failed:', error);
+    console.error('Clerk token validation failed:', error);
     return res.status(401).json({ error: 'Unauthorized: Invalid token' });
   }
 };

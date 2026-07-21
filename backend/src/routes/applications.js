@@ -7,7 +7,6 @@ const ResumeVersion = require('../models/ResumeVersion');
 const authMiddleware = require('../middleware/auth');
 const { scanAndFlagGhosted } = require('../services/ghostingService');
 const { analyzeFit } = require('../services/fitCheckService');
-const { uploadResume } = require('../services/s3Service');
 
 // Multer in-memory configuration
 const upload = multer({
@@ -15,7 +14,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-// Protect all routes with Cognito auth / mock auth
+// Protect all routes with Clerk auth / mock auth
 router.use(authMiddleware);
 
 /**
@@ -260,7 +259,7 @@ router.post('/:id/fit-score', runFitScore);
 
 /**
  * POST /api/applications/upload-resume
- * Upload a resume, parse PDF contents, store locally or on S3, and create a ResumeVersion.
+ * Upload a resume, parse PDF contents in-memory, and create a ResumeVersion in MongoDB.
  */
 router.post('/upload-resume', upload.single('resume'), async (req, res) => {
   try {
@@ -278,15 +277,12 @@ router.post('/upload-resume', upload.single('resume'), async (req, res) => {
       // Fallback: keep text blank
     }
 
-    // 2. Upload file to S3 or local fallback
-    const uploadResult = await uploadResume(req.file, req.user.id);
-
-    // 3. Save to database
+    // 2. Save to database
     const newResumeVersion = new ResumeVersion({
       userId: req.user.id,
-      fileName: uploadResult.fileName,
-      s3Key: uploadResult.s3Key,
-      localPath: uploadResult.localPath,
+      fileName: req.file.originalname,
+      s3Key: null,
+      localPath: null,
       extractedText: extractedText
     });
 
@@ -295,7 +291,7 @@ router.post('/upload-resume', upload.single('resume'), async (req, res) => {
       message: 'Resume uploaded and processed successfully.',
       resumeId: savedResume._id,
       fileName: savedResume.fileName,
-      storageType: uploadResult.storageType,
+      storageType: 'db',
       textLength: extractedText.length
     });
 
