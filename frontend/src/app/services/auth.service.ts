@@ -17,8 +17,11 @@ export class AuthService {
   }
 
   private async checkInitialState() {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const baseUrl = isLocalhost ? 'http://localhost:5001/api' : '/api';
+
     try {
-      const response = await fetch('http://localhost:5001/api/auth-config');
+      const response = await fetch(`${baseUrl}/auth-config`);
       if (response.ok) {
         const config = await response.json();
         if (config && config.clerkEnabled && config.publishableKey) {

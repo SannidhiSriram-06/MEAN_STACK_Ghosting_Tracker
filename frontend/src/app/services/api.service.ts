@@ -10,7 +10,11 @@ import { AuthService } from './auth.service';
 export class ApiService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
-  private readonly baseUrl = 'http://localhost:5001/api';
+  
+  private get baseUrl(): string {
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    return isLocalhost ? 'http://localhost:5001/api' : '/api';
+  }
 
   // Asynchronous auth headers helper to always fetch a fresh Clerk session token
   private getRequestOptions(params?: HttpParams): Observable<{ headers: HttpHeaders; params?: HttpParams }> {
