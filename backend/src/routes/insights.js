@@ -58,11 +58,11 @@ const getStats = async (req, res) => {
 
     // Ghosting rate calculation
     const ghostedCount = byStatus.ghosted || 0;
-    const ghostingRate = totalApplications > 0 ? Math.round((ghostedCount / totalApplications) * 100) / 100 : 0;
+    const ghostingRate = totalApplications > 0 ? Math.round((ghostedCount / totalApplications) * 100) : 0;
 
     // Response rate calculation: response is defined as any app that moved past 'applied' or 'ghosted'
     const responsesCount = (byStatus.screening || 0) + (byStatus.interview || 0) + (byStatus.offer || 0) + (byStatus.rejected || 0);
-    const responseRate = totalApplications > 0 ? Math.round((responsesCount / totalApplications) * 100) / 100 : 0;
+    const responseRate = totalApplications > 0 ? Math.round((responsesCount / totalApplications) * 100) : 0;
 
     // 3. Average days to first response (Calculated via MongoDB Aggregation Pipeline)
     const avgDaysAgg = await Application.aggregate([

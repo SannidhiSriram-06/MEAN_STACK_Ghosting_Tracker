@@ -87,6 +87,14 @@ router.use(authMiddleware);
 router.get('/', async (req, res) => {
   try {
     const { status, sort } = req.query;
+    
+    // Auto-flag ghosted applications (10 days threshold) before fetching
+    try {
+      await scanAndFlagGhosted(req.user.id, 10);
+    } catch (ghostErr) {
+      console.error('Auto-ghosting scan failed:', ghostErr);
+    }
+
     const query = { userId: req.user.id };
     
     if (status) {
@@ -234,20 +242,7 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-/**
- * POST /api/applications/check-ghosting
- * Manual trigger for ghosting scan.
- */
-router.post('/check-ghosting', async (req, res) => {
-  try {
-    const overrideDays = req.query.threshold !== undefined ? parseInt(req.query.threshold) : null;
-    const updatedCount = await scanAndFlagGhosted(req.user.id, overrideDays);
-    res.json({ updatedCount });
-  } catch (error) {
-    console.error('Failed to scan for ghosted applications:', error);
-    res.status(500).json({ error: 'Server error scanning for ghosted applications' });
-  }
-});
+
 
 /**
  * POST /api/applications/:id/fit-score AND POST /api/applications/:id/fit-check
