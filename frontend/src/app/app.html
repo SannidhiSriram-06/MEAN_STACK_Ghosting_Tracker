@@ -10,7 +10,11 @@
 </svg>
 
 <!-- Watermelon UI Auth-13 Screen -->
-@if (!auth.isAuthenticated()) {
+@if (auth.isAuthLoading()) {
+  <div style="height: 100vh; display: flex; justify-content: center; align-items: center; background: var(--bg-base);">
+    <div style="width: 24px; height: 24px; border: 2px solid var(--border-subtle); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+  </div>
+} @else if (!auth.isAuthenticated()) {
   <div style="position: absolute; top: 24px; right: 24px; z-index: 100;">
     <app-theme-toggle></app-theme-toggle>
   </div>
@@ -19,8 +23,8 @@
       <!-- Left Form Panel -->
       <div class="auth-07-left">
         <!-- Logo Branding -->
-        <div style="position: absolute; top: 32px; left: 32px; display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 20px; color: var(--text-primary);">
-          <i class="fa-solid fa-briefcase" style="color: #FDBA5E;"></i> JobTrack
+        <div style="position: absolute; top: 32px; left: 32px; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; color: var(--text-primary);">
+          <img src="logo.png" alt="JobTrack Logo" style="width: 28px; height: 28px; border-radius: 4px;"> JobTrack
         </div>
 
         <div style="width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 32px;">
@@ -58,7 +62,7 @@
       <div class="auth-13-card">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
           <div style="display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text-primary);">
-            <i class="fa-solid fa-briefcase" style="color: var(--accent-primary);"></i> JobTrack
+            <img src="logo.png" alt="JobTrack Logo" style="width: 24px; height: 24px; border-radius: 4px;"> JobTrack
           </div>
           <span style="font-size: 11px; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,0.06); color: var(--text-tertiary);">MEAN Stack</span>
         </div>
@@ -124,7 +128,7 @@
     <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
       <div class="logo" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
         <div style="display: flex; align-items: center; gap: 10px;">
-          <i class="fa-solid fa-briefcase"></i>
+          <img src="logo.png" alt="JobTrack Logo" style="width: 24px; height: 24px; border-radius: 4px;">
           <span>JobTrack</span>
         </div>
         <button class="sidebar-collapse-btn" (click)="sidebarCollapsed.update(v => !v)" [title]="sidebarCollapsed() ? 'Expand Sidebar' : 'Collapse Sidebar'">
@@ -151,33 +155,7 @@
             <span>Applications</span>
           </a>
         </li>
-        <li>
-          <a class="nav-item" [class.active]="activeTab() === 'settings'" (click)="changeTab('settings')">
-            <i class="fa-solid fa-gears"></i>
-            <span>Settings</span>
-          </a>
-        </li>
-        <li>
-          <a class="nav-item" [class.active]="activeTab() === 'account'" (click)="changeTab('account')">
-            <i class="fa-solid fa-user-gear"></i>
-            <span>Account</span>
-          </a>
-        </li>
       </ul>
-      
-      <div class="user-profile">
-        <div class="avatar">{{ auth.currentUser()?.name?.substring(0,2)?.toUpperCase() || 'ST' }}</div>
-        <div class="user-info">
-          <span class="user-name">{{ auth.currentUser()?.name || 'Candidate' }}</span>
-          <span class="user-email">{{ auth.currentUser()?.email || 'mock@example.com' }}</span>
-        </div>
-        <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
-          <app-theme-toggle></app-theme-toggle>
-          <button class="logout-btn" (click)="auth.logout()" title="Sign Out">
-            <i class="fa-solid fa-right-from-bracket"></i>
-          </button>
-        </div>
-      </div>
     </aside>
     
     <!-- Main Scrollable Screen -->
@@ -200,20 +178,13 @@
               @case ('dashboard') { {{ stats().totalApplications }} Applications Tracked }
               @case ('kanban') { 6 Pipeline Stages }
               @case ('applications') { Directory View }
-              @case ('settings') { System Integration }
-              @case ('account') { Data & Security }
+              @case ('account-privacy') { Account & Privacy }
             }
           </span>
         </div>
         
-        <!-- Right: Actions, Search, Ghosting Scanner, Theme Toggle, & Log Button -->
+        <!-- Right: Actions, Search, Theme Toggle, Profile, & Log Button -->
         <div class="header-actions" style="gap: 10px;">
-          <!-- Ghosting Scan Quick Action -->
-          <button class="btn btn-secondary" (click)="triggerGhostCheck()" style="padding: 6px 12px; font-size: 12px; gap: 6px;" title="Scan applications for ghosting triggers">
-            <i class="fa-solid fa-ghost" style="color: var(--accent-warning);"></i>
-            <span>Scan Ghosting</span>
-          </button>
-
           <!-- Skiper92 Vercel Command Search Trigger -->
           <button class="btn btn-secondary" (click)="toggleCmdK()" style="padding: 6px 12px; font-size: 12px; gap: 8px;">
             <i class="fa-solid fa-magnifying-glass"></i>
@@ -224,12 +195,32 @@
             </span>
           </button>
 
-          <!-- Skiper4 SVG Morphing Theme Toggle Component -->
           <app-theme-toggle></app-theme-toggle>
 
-          <!-- Subdued Clerk Status indicator -->
-          <div class="clerk-status-indicator" [class.clerk-status-active]="auth.isClerkConfigured()" [class.clerk-status-mock]="!auth.isClerkConfigured()">
-            {{ auth.isClerkConfigured() ? 'Clerk Active' : 'Local Mock' }}
+          <!-- User Profile Dropdown -->
+          <div class="user-dropdown-container" style="position: relative;">
+            <button class="user-avatar-btn" (click)="isProfileDropdownOpen.update(v => !v)" style="background: var(--bg-surface-raised); border: 1px solid var(--border-subtle); border-radius: 99px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-primary); font-weight: 600; font-size: 12px; transition: all 0.2s;">
+              {{ auth.currentUser()?.name?.substring(0,2)?.toUpperCase() || 'ST' }}
+            </button>
+            
+            @if (isProfileDropdownOpen()) {
+              <div class="vercel-dropdown-menu" style="position: absolute; top: calc(100% + 8px); right: 0; width: 220px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 200; overflow: hidden; display: flex; flex-direction: column;">
+                <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-subtle);">
+                  <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">{{ auth.currentUser()?.name || 'Candidate' }}</div>
+                  <div style="font-size: 11px; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ auth.currentUser()?.email || 'mock@example.com' }}</div>
+                </div>
+                <div style="padding: 4px;">
+                  <button (click)="changeTab('account-privacy'); isProfileDropdownOpen.set(false)" style="width: 100%; text-align: left; padding: 8px 12px; background: none; border: none; font-size: 13px; color: var(--text-primary); border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-surface-raised)'" onmouseout="this.style.background='none'">
+                    <i class="fa-solid fa-user-gear" style="width: 16px; text-align: center; color: var(--text-secondary);"></i> Account Settings
+                  </button>
+                </div>
+                <div style="padding: 4px; border-top: 1px solid var(--border-subtle);">
+                  <button (click)="auth.logout()" style="width: 100%; text-align: left; padding: 8px 12px; background: none; border: none; font-size: 13px; color: var(--text-primary); border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.15s;" onmouseover="this.style.background='var(--bg-surface-raised)'" onmouseout="this.style.background='none'">
+                    <i class="fa-solid fa-right-from-bracket" style="width: 16px; text-align: center; color: var(--text-secondary);"></i> Log Out
+                  </button>
+                </div>
+              </div>
+            }
           </div>
           
           <button class="btn btn-primary" (click)="openCreateModal()">
@@ -456,122 +447,10 @@
           </div>
         }
 
-        <!-- VIEW 4: SETTINGS (2-Column Dense Layout) -->
-        @if (activeTab() === 'settings') {
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
-
-            <!-- Left Column: CV Text Version Manager -->
-            <div class="glass-panel" style="padding: 24px; border-radius: 20px;">
-              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                <i class="fa-solid fa-file-lines" style="color: var(--accent-primary); font-size: 18px;"></i>
-                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">CV Text Versions</h3>
-              </div>
-              <p style="margin: 0 0 20px 0; font-size: 12px; color: var(--text-tertiary); line-height: 1.5;">
-                Paste your CV as plain text for accurate AI Fit Checks. Save multiple named versions (e.g. "TCS Tailored", "SWE General") and pick any when running an analysis.
-              </p>
-
-              <!-- Version Name Input -->
-              <div style="margin-bottom: 10px;">
-                <label style="font-size: 12px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 6px;">
-                  <i class="fa-solid fa-tag" style="margin-right: 4px;"></i> Version Name <span style="color: var(--text-tertiary); font-weight: 400;">(optional)</span>
-                </label>
-                <input
-                  type="text"
-                  [(ngModel)]="newCvVersionName"
-                  placeholder='e.g. "TCS Tailored", "SWE General"'
-                  style="width: 100%; padding: 9px 12px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); color: var(--text-primary); font-size: 13px; box-sizing: border-box; outline: none; transition: border-color 0.15s;"
-                />
-              </div>
-
-              <!-- CV Text Textarea -->
-              <div style="margin-bottom: 12px;">
-                <label style="font-size: 12px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 6px;">
-                  <i class="fa-solid fa-paste" style="margin-right: 4px;"></i> Paste Full CV Text
-                </label>
-                <textarea
-                  [(ngModel)]="newCvText"
-                  rows="10"
-                  placeholder="Paste your entire CV here — all sections: education, experience, skills, projects, certifications..."
-                  style="width: 100%; padding: 10px 12px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); color: var(--text-primary); font-size: 12px; line-height: 1.6; box-sizing: border-box; resize: vertical; outline: none; font-family: inherit; transition: border-color 0.15s;"
-                ></textarea>
-                <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; text-align: right;">
-                  {{ newCvText.length }} characters
-                </div>
-              </div>
-
-              <!-- Error / Success -->
-              @if (cvSaveError) {
-                <p style="font-size: 12px; color: var(--accent-danger); margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
-                  <i class="fa-solid fa-circle-xmark"></i> {{ cvSaveError }}
-                </p>
-              }
-              @if (cvSaveStatus) {
-                <p style="font-size: 12px; color: var(--accent-success); margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
-                  <i class="fa-solid fa-circle-check"></i> {{ cvSaveStatus }}
-                </p>
-              }
-
-              <!-- Save Button -->
-              <button
-                class="btn btn-primary"
-                (click)="saveCvVersion()"
-                [disabled]="savingCvVersion() || newCvText.trim().length < 20"
-                style="width: 100%; height: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px;"
-              >
-                @if (savingCvVersion()) {
-                  <i class="fa-solid fa-spinner fa-spin"></i> Saving...
-                } @else {
-                  <i class="fa-solid fa-floppy-disk"></i> Save CV Version
-                }
-              </button>
-
-              <!-- Saved Versions List -->
-              <h4 style="margin: 28px 0 12px 0; font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-                <i class="fa-solid fa-layer-group" style="color: var(--accent-primary);"></i>
-                Saved Versions
-                <span style="background: var(--bg-surface-raised); border: 1px solid var(--border-subtle); border-radius: 20px; padding: 1px 8px; font-size: 11px; color: var(--text-secondary); font-weight: 500;">
-                  {{ resumes().length }}
-                </span>
-              </h4>
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                @for (resume of resumes(); track resume._id) {
-                  <div style="padding: 12px 14px; background: var(--bg-surface-raised); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: border-color 0.15s;">
-                    <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
-                      <i class="fa-solid fa-file-lines" style="color: var(--accent-primary); font-size: 15px; flex-shrink: 0;"></i>
-                      <div style="min-width: 0;">
-                        <div style="font-size: 13px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ resume.fileName }}</div>
-                        <div style="font-size: 11px; color: var(--text-tertiary);">{{ resume.createdAt | date:'dd MMM yyyy, h:mm a' }}</div>
-                      </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                      <button
-                        type="button"
-                        (click)="downloadResumeVersion(resume, $event)"
-                        style="background: none; border: none; cursor: pointer; color: var(--accent-primary); padding: 4px 6px; border-radius: 6px; transition: color 0.15s, background 0.15s;"
-                        title="Download this CV version as .txt"
-                      >
-                        <i class="fa-solid fa-download" style="font-size: 13px;"></i>
-                      </button>
-                      <button
-                        type="button"
-                        (click)="deleteResumeVersion(resume._id, $event)"
-                        style="background: none; border: none; cursor: pointer; color: var(--text-tertiary); padding: 4px 6px; border-radius: 6px; transition: color 0.15s, background 0.15s;"
-                        title="Delete this CV version"
-                      >
-                        <i class="fa-solid fa-trash-can" style="font-size: 13px;"></i>
-                      </button>
-                    </div>
-                  </div>
-                } @empty {
-                  <div style="text-align: center; padding: 24px; color: var(--text-tertiary); font-size: 13px; border: 1px dashed var(--border-subtle); border-radius: var(--border-radius-sm);">
-                    <i class="fa-solid fa-inbox" style="font-size: 24px; display: block; margin-bottom: 8px; opacity: 0.5;"></i>
-                    No CV versions saved yet.<br>Paste your CV above to get started.
-                  </div>
-                }
-              </div>
-            </div>
-
-            <!-- Right Column: Clerk Profile Manager -->
+        <!-- VIEW 4: ACCOUNT & PRIVACY (Merged Layout) -->
+        @if (activeTab() === 'account-privacy') {
+          <div style="display: flex; flex-direction: column; gap: 24px; max-width: 1000px;">
+            <!-- Clerk Profile Manager -->
             @if (auth.isClerkConfigured()) {
               <div class="glass-panel" style="padding: 24px; border-radius: 20px;">
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
@@ -595,12 +474,6 @@
               </div>
             }
 
-          </div>
-        }
-
-        <!-- VIEW 5: ACCOUNT MANAGEMENT -->
-        @if (activeTab() === 'account') {
-          <div style="display: flex; flex-direction: column; gap: 24px; max-width: 800px;">
             <!-- Export Data Panel -->
             <div class="glass-panel">
               <h3 style="margin-top: 0; margin-bottom: 6px; font-size: 15px; font-weight: 600;">Export My Data</h3>

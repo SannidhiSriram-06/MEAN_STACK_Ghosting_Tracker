@@ -7,15 +7,15 @@
 
 :root {
   /* Dark Mode Default Palette */
-  --bg-base: #0b0b0d;
-  --bg-surface: #131316;
-  --bg-surface-raised: #1a1a1f;
-  --bg-input: #121215;
+  --bg-base: #000000;
+  --bg-surface: #0a0a0a;
+  --bg-surface-raised: #141414;
+  --bg-input: #0a0a0a;
   --bg-glass: rgba(255, 255, 255, 0.04);
-  --bg-glass-heavy: rgba(19, 19, 22, 0.85);
+  --bg-glass-heavy: rgba(0, 0, 0, 0.85);
 
   /* Soft Pastel UI Accents */
-  --accent-primary: #a5b4fc;   /* soft periwinkle */
+  --accent-primary: #d4ff00;   /* acid yellow */
   --accent-secondary: #fbcfe8; /* soft pink */
   --accent-success: #bbf7d0;   /* soft mint */
   --accent-warning: #fde68a;   /* soft amber */
@@ -67,14 +67,14 @@
 }
 
 [data-theme="light"] {
-  --bg-base: #fafafa;
+  --bg-base: #fdfbf7;
   --bg-surface: #ffffff;
-  --bg-surface-raised: #f4f4f5;
-  --bg-input: #f1f1f4;
+  --bg-surface-raised: #f5f3ef;
+  --bg-input: #f5f3ef;
   --bg-glass: rgba(0, 0, 0, 0.03);
-  --bg-glass-heavy: rgba(255, 255, 255, 0.9);
+  --bg-glass-heavy: rgba(253, 251, 247, 0.9);
 
-  --accent-primary: #4f46e5;
+  --accent-primary: #1e3a8a;
   --accent-secondary: #db2777;
   --accent-success: #15803d;
   --accent-warning: #b45309;
@@ -1402,7 +1402,7 @@ body {
 
 /* UserProfile Left Navigation Pane */
 #clerk-profile-container .cl-navbar {
-  background-color: var(--bg-surface-raised) !important;
+  background: var(--bg-surface-raised) !important;
   border-right: 1px solid var(--border-subtle) !important;
 }
 
@@ -1424,8 +1424,7 @@ body {
 }
 
 /* Fix any buttons in UserProfile (Update profile, Add email, etc.) */
-#clerk-profile-container .cl-formButtonPrimary,
-#clerk-profile-container button {
+#clerk-profile-container .cl-formButtonPrimary {
   color: #111827 !important;
   background-color: #FDBA5E !important;
   border-radius: var(--border-radius-sm) !important;
@@ -1441,4 +1440,8 @@ body {
   color: var(--text-primary) !important;
   background-color: var(--bg-surface-raised) !important;
   border: 1px solid var(--border-subtle) !important;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
