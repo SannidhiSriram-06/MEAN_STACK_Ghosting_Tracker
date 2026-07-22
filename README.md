@@ -58,7 +58,8 @@ npm start
 ---
 
 ## 🛠️ Tech Stack & Requirements
-* **Frontend**: Angular 21 (Standalone Components, Signals, Vanilla Glassmorphism CSS)
+* **Frontend**: Angular 21 (Standalone Components, Signals, Vanilla Glassmorphism CSS + Tailwind CSS)
+* **UI/UX**: Custom Milkmaid/Green & Black/Acid Yellow Theme System, Lucide Angular Icons, Animated Landing Page
 * **Backend**: Node.js 20 (Express CommonJS, Mongoose, node-cron, Multer, PDF-Parse)
 * **AI Engine**: Groq API (`llama-3.3-70b-versatile`) with deterministic fallback
 * **Deployment**: Vercel Serverless Functions

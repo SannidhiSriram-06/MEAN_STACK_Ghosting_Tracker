@@ -5,6 +5,7 @@ import { ApiService } from './services/api.service';
 import { AuthService } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
 import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
+import { Hero22Component } from './components/hero-22/hero-22.component';
 
 export interface CommandItem {
   id: string;
@@ -19,7 +20,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, ThemeToggleComponent, DragDropModule],
+  imports: [CommonModule, FormsModule, ThemeToggleComponent, DragDropModule, Hero22Component],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -88,6 +89,7 @@ export class App implements OnInit {
   // Auth Page Form Models
   protected authMode = signal<'login' | 'signup'>('login');
   protected showPassword = signal<boolean>(false);
+  protected showLanding = signal<boolean>(true);
   protected authEmail = '';
   protected authPassword = '';
   protected authError = '';
@@ -398,6 +400,17 @@ export class App implements OnInit {
           this.handleAuthSubmit();
         })
         .catch((err: any) => this.authError = err?.message || 'Registration failed');
+    }
+  }
+
+  protected proceedToAuth(mode: 'login' | 'signup') {
+    this.authMode.set(mode);
+    this.showLanding.set(false);
+    
+    if (this.auth.isClerkConfigured()) {
+      setTimeout(() => {
+        this.mountClerkSignIn();
+      }, 100);
     }
   }
 

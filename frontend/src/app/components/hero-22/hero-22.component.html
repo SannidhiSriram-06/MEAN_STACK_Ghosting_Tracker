@@ -1,0 +1,115 @@
+<section class="relative isolate min-h-screen overflow-hidden font-sans antialiased" style="background: var(--bg-base); color: var(--text-primary); transition: background var(--transition-fast), color var(--transition-fast);">
+  <img
+    [src]="backgroundImage"
+    alt=""
+    class="pointer-events-none absolute inset-0 h-full w-full object-cover"
+    style="filter: var(--hero-image-filter); transition: filter var(--transition-normal);"
+    @imageAnimation
+  />
+  <div class="relative flex min-h-screen w-full flex-col overflow-hidden px-7 py-5 sm:px-12 lg:px-[5.25rem]">
+    <nav
+      @navAnimation
+      class="relative z-20 flex min-h-10 w-full items-center justify-between gap-6"
+    >
+      <a
+        href="#"
+        class="inline-flex min-h-10 items-center gap-2 text-lg font-normal tracking-[-0.045em] transition-[opacity,transform] duration-200 ease-out hover:opacity-75 active:scale-[0.96]" style="color: var(--text-primary);"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8" style="color: var(--accent-primary);"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        {{brandName}}
+      </a>
+
+      <div class="hidden items-center gap-[2.85rem] lg:flex">
+        <a
+          *ngFor="let link of navLinks"
+          [href]="link.href"
+          class="inline-flex min-h-10 items-center text-sm font-medium transition-[opacity,transform] duration-200 ease-out hover:opacity-65 active:scale-[0.96]" style="color: var(--text-secondary);"
+        >
+          {{link.label}}
+        </a>
+      </div>
+
+      <div class="flex items-center gap-5">
+        <app-theme-toggle></app-theme-toggle>
+
+        <a
+          [href]="'#'"
+          (click)="onLoginClick($event)"
+          class="hidden min-h-10 items-center text-sm font-medium transition-[opacity,transform] duration-200 ease-out hover:opacity-65 active:scale-[0.96] sm:inline-flex" style="color: var(--text-primary);"
+        >
+          {{loginLabel}}
+        </a>
+        <a
+          [href]="'#'"
+          (click)="onSignupClick($event)"
+          class="inline-flex min-h-10 items-center justify-center rounded-sm px-5 text-sm font-normal shadow-[inset_0_2px_6px_0px_rgba(255,255,255,0.15),inset_0_-2px_6px_0px_rgba(0,0,0,0.15)] outline outline-black/20 transition-[background-color,box-shadow,transform,filter] duration-200 ease-out hover:brightness-110 active:scale-[0.96]" style="background: var(--accent-primary); color: var(--bg-surface);"
+        >
+          {{signupLabel}}
+        </a>
+      </div>
+    </nav>
+
+    <div class="relative z-10 grid flex-1 grid-cols-1 items-start gap-10 pt-14 lg:grid-cols-[minmax(0,0.88fr)_minmax(28rem,1fr)] lg:pt-20">
+      <div class="max-w-4xl">
+        <h1
+          class="copy-element max-w-4xl text-[clamp(3.4rem,4.5vw,5.55rem)] leading-[1.08] font-normal tracking-[-0.065em] text-balance" style="color: var(--text-primary);"
+        >
+          <span class="block">{{headingLine1}}</span>
+          <span class="block">
+            {{headingLine2Prefix}}
+            <span class="font-[Georgia,serif] text-[0.95em] font-normal tracking-[-0.075em] italic">
+              {{headingHighlight}}
+            </span>
+          </span>
+        </h1>
+
+        <p
+          class="copy-element mt-7 max-w-lg leading-[1.42] font-medium text-pretty" style="color: var(--text-secondary);"
+        >
+          {{description}}
+        </p>
+
+        <div
+          class="copy-element mt-7 flex flex-wrap items-center gap-5"
+        >
+          <a
+            [href]="'#'"
+            (click)="onPrimaryClick($event)"
+            class="group inline-flex min-h-11 items-center justify-center gap-2 rounded-sm px-5 text-sm font-normal shadow-[inset_0_2px_6px_0px_rgba(255,255,255,0.15),inset_0_-2px_6px_0px_rgba(0,0,0,0.15)] outline outline-black/20 transition-[background-color,box-shadow,transform,filter] duration-200 ease-out hover:brightness-110 active:scale-[0.96]" style="background: var(--accent-primary); color: var(--bg-surface);"
+          >
+            {{primaryCtaLabel}}
+            <lucide-icon [img]="ArrowRightIcon" class="w-4 h-4 -rotate-45 transition-transform duration-200 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"></lucide-icon>
+          </a>
+          <a
+            [href]="'#'"
+            (click)="onSecondaryClick($event)"
+            class="inline-flex min-h-11 items-center justify-center rounded-sm px-7 text-[0.78rem] font-semibold shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] backdrop-blur-sm transition-[background-color,box-shadow,transform] duration-200 ease-out hover:bg-white/15 hover:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.14)] active:scale-[0.96]" style="color: var(--text-primary);"
+          >
+            {{secondaryCtaLabel}}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="absolute bottom-20 left-7 z-20 flex-wrap items-center gap-8 sm:left-2 lg:left-[5.25rem] sm:flex lg:gap-12"
+    >
+      <div
+        *ngFor="let feature of features"
+        class="feature-element flex min-h-12 items-center gap-3"
+      >
+        <span class="inline-flex w-10 h-10 shrink-0 items-center justify-center rounded-full shadow-xs outline -outline-offset-1 outline-black/10" style="background: var(--border-subtle); color: var(--text-primary);">
+          <lucide-icon [img]="getIcon(feature.icon)" class="w-5 h-5" aria-hidden="true"></lucide-icon>
+        </span>
+        <span class="leading-none">
+          <span class="block text-[0.87rem] font-semibold" style="color: var(--text-primary);">
+            {{feature.title}}
+          </span>
+          <span class="mt-1.5 block text-[0.72rem] font-medium" style="color: var(--text-secondary);">
+            {{feature.description}}
+          </span>
+        </span>
+      </div>
+    </div>
+  </div>
+</section>

@@ -15,12 +15,20 @@
     <div style="width: 24px; height: 24px; border: 2px solid var(--border-subtle); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
   </div>
 } @else if (!auth.isAuthenticated()) {
-  <div style="position: absolute; top: 24px; right: 24px; z-index: 100;">
-    <app-theme-toggle></app-theme-toggle>
-  </div>
-  @if (auth.isClerkConfigured()) {
-    <div class="auth-07-root">
-      <!-- Left Form Panel -->
+  @if (showLanding()) {
+    <app-hero-22 
+      (loginClick)="proceedToAuth('login')" 
+      (signupClick)="proceedToAuth('signup')"
+      (primaryCtaClick)="proceedToAuth('signup')"
+      (secondaryCtaClick)="proceedToAuth('login')">
+    </app-hero-22>
+  } @else {
+    <div style="position: absolute; top: 24px; right: 24px; z-index: 100;">
+      <app-theme-toggle></app-theme-toggle>
+    </div>
+    @if (auth.isClerkConfigured()) {
+      <div class="auth-07-root">
+        <!-- Left Form Panel -->
       <div class="auth-07-left">
         <!-- Logo Branding -->
         <div style="position: absolute; top: 32px; left: 32px; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; color: var(--text-primary);">
@@ -119,6 +127,7 @@
         </div>
       </div>
     </div>
+  }
   }
 } @else {
   <!-- Main Application Shell -->

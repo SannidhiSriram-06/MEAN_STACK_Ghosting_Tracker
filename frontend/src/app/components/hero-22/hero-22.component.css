@@ -1,0 +1,4 @@
+/* Tailwind styles are applied in the HTML */
+:host {
+  display: block;
+}
