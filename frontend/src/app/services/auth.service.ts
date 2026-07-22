@@ -6,6 +6,7 @@ import { Injectable, signal } from '@angular/core';
 export class AuthService {
   // Signals for reactive state
   readonly isAuthenticated = signal<boolean>(false);
+  readonly isAuthLoading = signal<boolean>(true);
   readonly currentUser = signal<any>(null);
   readonly isClerkConfigured = signal<boolean>(false);
   
@@ -24,6 +25,7 @@ export class AuthService {
           this.isClerkConfigured.set(true);
           localStorage.setItem('clerk_pem_public_key', config.publishableKey);
           await this.initClerk(config.publishableKey);
+          this.isAuthLoading.set(false);
           return;
         }
       }
@@ -50,6 +52,8 @@ export class AuthService {
         this.currentUser.set(user ? JSON.parse(user) : { name: 'Viva Candidate', email: 'student@example.edu' });
       }
     }
+    
+    this.isAuthLoading.set(false);
   }
 
   private getDomainFromPublishableKey(publishableKey: string): string | null {

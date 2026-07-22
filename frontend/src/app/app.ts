@@ -30,8 +30,9 @@ export class App implements OnInit {
   protected readonly theme = inject(ThemeService);
 
   // Navigation & View Tabs
-  protected readonly activeTab = signal<'dashboard' | 'kanban' | 'applications' | 'settings' | 'account'>('dashboard');
+  protected readonly activeTab = signal<'dashboard' | 'kanban' | 'applications' | 'account-privacy'>((localStorage.getItem('activeTab') as any) || 'dashboard');
   protected readonly sidebarCollapsed = signal<boolean>(false);
+  protected readonly isProfileDropdownOpen = signal<boolean>(false);
 
   // Cmd+K / Skiper92 Command Palette State
   protected readonly isCmdKOpen = signal<boolean>(false);
@@ -110,10 +111,8 @@ export class App implements OnInit {
     effect(() => {
       if (this.auth.isAuthenticated()) {
         this.loadAllData();
-        if (this.activeTab() === 'settings' && this.auth.isClerkConfigured()) {
-          setTimeout(() => {
-            this.mountClerkUserProfile();
-          }, 300);
+        if (this.activeTab() === 'account-privacy' && this.auth.isClerkConfigured()) {
+          this.scheduleMountClerkProfile();
         }
       } else if (this.auth.isClerkConfigured()) {
         // Mount only once when Clerk is ready and container exists
@@ -244,15 +243,14 @@ export class App implements OnInit {
       { id: 'page-dashboard', category: 'Pages', label: 'Dashboard', icon: 'fa-chart-simple', action: () => this.runCmdKAction('nav', 'dashboard') },
       { id: 'page-kanban', category: 'Pages', label: 'Kanban Board', icon: 'fa-table-columns', action: () => this.runCmdKAction('nav', 'kanban') },
       { id: 'page-applications', category: 'Pages', label: 'All Applications', icon: 'fa-list-check', action: () => this.runCmdKAction('nav', 'applications') },
-      { id: 'page-settings', category: 'Pages', label: 'Settings & Integrations', icon: 'fa-gears', action: () => this.runCmdKAction('nav', 'settings') },
-      { id: 'page-account', category: 'Pages', label: 'Account & Data Management', icon: 'fa-user-gear', action: () => this.runCmdKAction('nav', 'account') }
+      { id: 'page-account-privacy', category: 'Pages', label: 'Account & Privacy', icon: 'fa-user-gear', action: () => this.runCmdKAction('nav', 'account-privacy') }
     ];
 
     // Actions
     const actions: CommandItem[] = [
       { id: 'action-log', category: 'Actions', label: 'Log New Job Application', icon: 'fa-plus', action: () => this.runCmdKAction('create') },
       { id: 'action-theme', category: 'Actions', label: 'Toggle Light/Dark Theme', icon: 'fa-circle-half-stroke', action: () => this.runCmdKAction('theme') },
-      { id: 'action-ghost', category: 'Actions', label: 'Scan Ghosting Statuses', icon: 'fa-ghost', action: () => { this.isCmdKOpen.set(false); this.triggerGhostCheck(); } },
+
       { id: 'action-export-json', category: 'Actions', label: 'Export Applications as JSON', icon: 'fa-file-code', action: () => { this.isCmdKOpen.set(false); this.exportDataJSON(); } },
       { id: 'action-export-csv', category: 'Actions', label: 'Export Applications as CSV', icon: 'fa-file-csv', action: () => { this.isCmdKOpen.set(false); this.exportDataCSV(); } }
     ];
@@ -308,14 +306,13 @@ export class App implements OnInit {
   }
 
   // Tab Navigation Helper
-  protected changeTab(tab: 'dashboard' | 'kanban' | 'applications' | 'settings' | 'account') {
+  protected changeTab(tab: 'dashboard' | 'kanban' | 'applications' | 'account-privacy') {
     this.activeTab.set(tab);
+    localStorage.setItem('activeTab', tab);
     if (tab === 'dashboard' || tab === 'applications' || tab === 'kanban') {
       this.loadAllData();
-    } else if (tab === 'settings' && this.auth.isClerkConfigured()) {
-      setTimeout(() => {
-        this.mountClerkUserProfile();
-      }, 200);
+    } else if (tab === 'account-privacy' && this.auth.isClerkConfigured()) {
+      this.scheduleMountClerkProfile();
     }
   }
 
@@ -560,21 +557,7 @@ export class App implements OnInit {
     return 'var(--accent-danger)';
   }
 
-  protected triggerGhostCheck() {
-    const useTestThreshold = confirm('Do you want to run a test scan with a 0-day threshold?\n\n(This will immediately flag all active Applied/Screening applications as ghosted for testing purposes).');
-    const threshold = useTestThreshold ? 0 : undefined;
 
-    this.api.checkGhosting(threshold).subscribe({
-      next: (res) => {
-        alert(`Ghosting scan complete! Updated ${res.updatedCount} applications.`);
-        this.loadAllData();
-      },
-      error: (err) => {
-        alert('Ghost check scan failed.');
-        console.error('Ghost check error:', err);
-      }
-    });
-  }
 
   protected deleteApplication(id: string) {
     if (confirm('Are you sure you want to delete this application?')) {
@@ -709,11 +692,25 @@ export class App implements OnInit {
 
   // ── Clerk Profile Mount ─────────────────────────────────────────────────────
 
+  private mountProfileTimeout: any;
+
+  private scheduleMountClerkProfile() {
+    clearTimeout(this.mountProfileTimeout);
+    this.mountProfileTimeout = setTimeout(() => {
+      this.mountClerkUserProfile();
+    }, 200);
+  }
+
   private mountClerkUserProfile(retries = 15) {
     const Clerk = this.auth.getClerkInstance();
     const container = document.getElementById('clerk-profile-container');
     if (!Clerk || !container) {
       if (retries > 0) setTimeout(() => this.mountClerkUserProfile(retries - 1), 200);
+      return;
+    }
+
+    // Check if Clerk is already mounted in this container to prevent duplicate mounts
+    if (container.querySelector('.cl-rootBox')) {
       return;
     }
 
@@ -723,10 +720,11 @@ export class App implements OnInit {
 
     try {
       Clerk.mountUserProfile(container, {
+        routing: 'virtual',
         appearance: {
           elements: {
             rootBox: { width: '100%' },
-            card: { boxShadow: 'none', border: 'none', background: 'transparent', width: '100%', padding: '0' }
+            card: { boxShadow: 'none', border: 'none', background: 'transparent' }
           },
           variables: {
             colorPrimary: '#FDBA5E',
