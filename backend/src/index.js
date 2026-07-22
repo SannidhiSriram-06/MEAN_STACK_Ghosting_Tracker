@@ -39,6 +39,27 @@ app.get('/api/auth-config', (req, res) => {
   });
 });
 
+// Vercel Cron Endpoint for Ghosting Scan
+app.get('/api/cron/ghost-scan', async (req, res) => {
+  // Secure the endpoint with a CRON_SECRET if it is provided
+  if (process.env.CRON_SECRET) {
+    const authHeader = req.headers.authorization;
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+
+  console.log('Running automated ghosting check via Vercel Cron...');
+  try {
+    const updatedCount = await scanAndFlagGhosted();
+    console.log(`Cron ghosting scan complete. Updated ${updatedCount} applications.`);
+    res.status(200).json({ success: true, updatedCount });
+  } catch (error) {
+    console.error('Failed to execute ghosting cron job:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Daily scheduled cron job (runs every day at midnight '0 0 * * *')
 cron.schedule('0 0 * * *', async () => {
   console.log('Running daily automated ghosting check...');
