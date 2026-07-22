@@ -1,0 +1,38 @@
+.auth-07-root {
+  display: flex;
+  min-height: 100vh;
+  width: 100vw;
+  background: var(--bg-base);
+  font-family: var(--font-family);
+  overflow: hidden;
+}
+
+.auth-07-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 50%;
+  padding: 48px;
+  box-sizing: border-box;
+}
+
+.auth-07-right {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  width: 50%;
+  height: 100vh;
+  box-sizing: border-box;
+}
+
+@media (max-width: 991px) {
+  .auth-07-right {
+    display: none !important;
+  }
+  .auth-07-left {
+    width: 100% !important;
+    padding: 24px !important;
+  }
+}

@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, HostListener } from '@angular/core';
+import { Component, signal, inject, OnInit, HostListener, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from './services/api.service';
@@ -14,10 +14,12 @@ export interface CommandItem {
   action: () => void;
 }
 
+import { DragDropModule } from '@angular/cdk/drag-drop';
+
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, FormsModule, ThemeToggleComponent],
+  imports: [CommonModule, FormsModule, ThemeToggleComponent, DragDropModule],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -59,12 +61,14 @@ export class App implements OnInit {
   protected readonly isDetailOpen = signal<boolean>(false);
   protected readonly selectedApp = signal<any>(null);
   protected readonly runningFitCheck = signal<boolean>(false);
+  protected readonly isVerdictOpen = signal<boolean>(false);
 
   // Destructive Modals State (Phase 4)
   protected readonly isDeleteDataOpen = signal<boolean>(false);
   protected readonly isDeleteAccountOpen = signal<boolean>(false);
   protected deleteConfirmText = '';
   protected deleteError = '';
+
 
   // Form Models — defined via factory to allow clean resets
   private getDefaultApp() {
@@ -87,15 +91,83 @@ export class App implements OnInit {
   protected authPassword = '';
   protected authError = '';
 
-  // Clerk Configuration Input Model
-  protected clerkPemPublicKey = '';
+  // CV Text Version State
+  protected newCvText = '';
+  protected newCvVersionName = '';
+  protected savingCvVersion = signal<boolean>(false);
+  protected cvSaveStatus = '';
+  protected cvSaveError = '';
 
-  // File Upload State
-  protected selectedFile: File | null = null;
-  protected uploadingResume = signal<boolean>(false);
+  // Fit Check State — plain text only
   protected pastedCvText = '';
-  protected usePastedText = false;
-  protected fileUploadStatus = '';
+
+  // Per-application PDF CV state
+  protected pendingCvFile: File | null = null;
+  protected cvUploadError = '';
+  protected cvUploading = signal<boolean>(false);
+
+  constructor() {
+    effect(() => {
+      if (this.auth.isAuthenticated()) {
+        this.loadAllData();
+        if (this.activeTab() === 'settings' && this.auth.isClerkConfigured()) {
+          setTimeout(() => {
+            this.mountClerkUserProfile();
+          }, 300);
+        }
+      } else if (this.auth.isClerkConfigured()) {
+        // Mount only once when Clerk is ready and container exists
+        setTimeout(() => {
+          this.mountClerkSignIn();
+        }, 200);
+      }
+    });
+  }
+
+  private mountClerkSignIn(retries = 10) {
+    const Clerk = this.auth.getClerkInstance();
+    const container = document.getElementById('clerk-auth-container');
+    if (!Clerk || !container) return;
+
+    // Check if Clerk is already mounted in this container to prevent duplicate mounts
+    if (container.querySelector('.cl-rootBox')) {
+      return;
+    }
+
+    try {
+      container.innerHTML = ''; // Clear loading spinner
+      Clerk.mountSignIn(container, {
+        appearance: {
+          elements: {
+            card: {
+              boxShadow: 'none',
+              border: 'none',
+              background: 'transparent',
+              width: '100%',
+              padding: '0'
+            },
+            headerTitle: { display: 'none' },
+            headerSubtitle: { display: 'none' },
+            logoImage: { display: 'none' },
+            footer: { background: 'transparent' }
+          },
+          variables: {
+            colorPrimary: '#FDBA5E',
+            colorBackground: 'transparent'
+          }
+        }
+      });
+    } catch (error: any) {
+      if (error.message && error.message.includes('not ready yet') && retries > 0) {
+        console.log(`Clerk components not ready yet, retrying in 100ms... (${retries} retries left)`);
+        setTimeout(() => {
+          this.mountClerkSignIn(retries - 1);
+        }, 100);
+      } else {
+        console.error('Failed to mount Clerk Sign In:', error);
+      }
+    }
+  }
 
   ngOnInit() {
     if (this.auth.isAuthenticated()) {
@@ -240,6 +312,10 @@ export class App implements OnInit {
     this.activeTab.set(tab);
     if (tab === 'dashboard' || tab === 'applications' || tab === 'kanban') {
       this.loadAllData();
+    } else if (tab === 'settings' && this.auth.isClerkConfigured()) {
+      setTimeout(() => {
+        this.mountClerkUserProfile();
+      }, 200);
     }
   }
 
@@ -325,20 +401,77 @@ export class App implements OnInit {
 
   protected openCreateModal() {
     this.isCreateOpen.set(true);
+    this.pendingCvFile = null;
+    this.cvUploadError = '';
   }
 
   protected closeCreateModal() {
     this.isCreateOpen.set(false);
+    this.pendingCvFile = null;
+    this.cvUploadError = '';
+  }
+
+  protected onCvFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    this.cvUploadError = '';
+    if (!file) { this.pendingCvFile = null; return; }
+    if (file.type !== 'application/pdf') {
+      this.cvUploadError = 'Only PDF files are accepted.';
+      this.pendingCvFile = null;
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this.cvUploadError = 'File must be under 5 MB.';
+      this.pendingCvFile = null;
+      return;
+    }
+    this.pendingCvFile = file;
   }
 
   protected createApplicationSubmit() {
     this.api.createApplication(this.newApp).subscribe({
-      next: () => {
-        this.closeCreateModal();
+      next: (created) => {
+        const file = this.pendingCvFile;
         this.newApp = this.getDefaultApp();
-        this.loadAllData();
+        this.pendingCvFile = null;
+
+        if (file) {
+          // Upload the PDF after the application is created
+          this.cvUploading.set(true);
+          this.api.uploadApplicationCv(created._id, file).subscribe({
+            next: () => {
+              this.cvUploading.set(false);
+              this.closeCreateModal();
+              this.loadAllData();
+            },
+            error: (err) => {
+              this.cvUploading.set(false);
+              this.cvUploadError = err?.error?.error || 'CV upload failed. Application was saved.';
+              this.closeCreateModal();
+              this.loadAllData();
+            }
+          });
+        } else {
+          this.closeCreateModal();
+          this.loadAllData();
+        }
       },
       error: (err) => console.error('Failed to create application:', err)
+    });
+  }
+
+  protected downloadAppCv(app: any) {
+    this.api.downloadApplicationCv(app._id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = app.cvPdf?.originalName || `${app.company}-cv.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (err) => console.error('Failed to download CV:', err)
     });
   }
 
@@ -362,19 +495,49 @@ export class App implements OnInit {
     });
   }
 
+  // Handle CDK drag-and-drop actions across columns
+  protected onCardDrop(event: any) {
+    if (event.previousContainer === event.container) {
+      return;
+    }
+    const item = event.item.data;
+    const newStatus = event.container.id; // column ID maps to application status
+    this.updateAppStatus(item._id, newStatus);
+  }
+
+  // Get difference in days since the last status change or applied date
+  protected getDaysInStage(app: any): number {
+    const date = app.lastStatusChange || app.dateApplied || app.createdAt;
+    if (!date) return 0;
+    const changeDate = new Date(date);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - changeDate.getTime());
+    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  }
+
+  // Verify if a card is aging (>7 days in Applied or Screening)
+  protected isAging(app: any): boolean {
+    const days = this.getDaysInStage(app);
+    return days > 7 && (app.status === 'applied' || app.status === 'screening');
+  }
+
   protected triggerFitCheck(id: string) {
     this.runningFitCheck.set(true);
-    const payload = this.usePastedText ? { cvText: this.pastedCvText } : {};
+    const payload: any = {};
+    if (this.pastedCvText.trim()) {
+      payload.cvText = this.pastedCvText.trim();
+    }
 
     this.api.runFitScore(id, payload).subscribe({
       next: (fitScore) => {
         this.runningFitCheck.set(false);
-        // API returns app.fitScore directly — patch it onto selectedApp
         const current = this.selectedApp();
         if (current) {
           this.selectedApp.set({ ...current, fitScore });
         }
         this.loadAllData();
+        // Auto-open the verdict panel
+        this.isVerdictOpen.set(true);
       },
       error: (err) => {
         this.runningFitCheck.set(false);
@@ -383,13 +546,33 @@ export class App implements OnInit {
     });
   }
 
+  protected openVerdictPanel() {
+    this.isVerdictOpen.set(true);
+  }
+
+  protected closeVerdictPanel() {
+    this.isVerdictOpen.set(false);
+  }
+
+  protected getFitScoreColor(score: number): string {
+    if (score >= 75) return 'var(--accent-success)';
+    if (score >= 45) return 'var(--accent-warning)';
+    return 'var(--accent-danger)';
+  }
+
   protected triggerGhostCheck() {
-    this.api.checkGhosting().subscribe({
+    const useTestThreshold = confirm('Do you want to run a test scan with a 0-day threshold?\n\n(This will immediately flag all active Applied/Screening applications as ghosted for testing purposes).');
+    const threshold = useTestThreshold ? 0 : undefined;
+
+    this.api.checkGhosting(threshold).subscribe({
       next: (res) => {
-        alert(res.message || 'Ghosting scan complete');
+        alert(`Ghosting scan complete! Updated ${res.updatedCount} applications.`);
         this.loadAllData();
       },
-      error: (err) => console.error('Ghost check error:', err)
+      error: (err) => {
+        alert('Ghost check scan failed.');
+        console.error('Ghost check error:', err);
+      }
     });
   }
 
@@ -461,51 +644,104 @@ export class App implements OnInit {
       return;
     }
     this.api.deleteAccount().subscribe({
-      next: () => {
-        this.isDeleteAccountOpen.set(false);
-        this.deleteConfirmText = '';
-        this.deleteError = '';
-        this.auth.logout();
+      next: async () => {
+        try {
+          await this.auth.deleteCurrentUser();
+          this.isDeleteAccountOpen.set(false);
+          this.deleteConfirmText = '';
+          this.deleteError = '';
+        } catch (err: any) {
+          this.deleteError = err.message || 'Failed to wipe Clerk account.';
+        }
       },
       error: (err) => this.deleteError = err.error?.error || 'Failed to delete account.'
     });
   }
 
-  // File Upload Handlers
-  protected onFileSelected(event: any) {
-    this.selectedFile = event.target.files[0] || null;
-  }
+  // ── CV Text Version Handlers ───────────────────────────────────────────────
 
-  protected uploadSelectedResume() {
-    if (!this.selectedFile) return;
-    this.uploadingResume.set(true);
-    const formData = new FormData();
-    formData.append('resume', this.selectedFile);
+  protected saveCvVersion() {
+    const text = this.newCvText.trim();
+    if (!text || text.length < 20) {
+      this.cvSaveError = 'Please paste your full CV text (at least 20 characters).';
+      return;
+    }
+    this.cvSaveError = '';
+    this.cvSaveStatus = '';
+    this.savingCvVersion.set(true);
 
-    this.api.uploadResume(formData).subscribe({
-      next: (res) => {
-        this.uploadingResume.set(false);
-        this.fileUploadStatus = 'Resume uploaded successfully!';
-        this.selectedFile = null;
+    this.api.saveTextResume({ versionName: this.newCvVersionName.trim(), cvText: text }).subscribe({
+      next: () => {
+        this.savingCvVersion.set(false);
+        this.cvSaveStatus = 'CV version saved!';
+        this.newCvText = '';
+        this.newCvVersionName = '';
         this.loadResumes();
+        setTimeout(() => this.cvSaveStatus = '', 3000);
       },
       error: (err) => {
-        this.uploadingResume.set(false);
-        this.fileUploadStatus = 'Upload failed.';
-        console.error('Resume upload error:', err);
+        this.savingCvVersion.set(false);
+        this.cvSaveError = err?.error?.error || 'Failed to save CV version.';
       }
     });
   }
 
-  // Load Clerk config from auth service
-  protected loadClerkConfig() {
-    const config = this.auth.getClerkConfig();
-    this.clerkPemPublicKey = config.pemPublicKey;
+  protected deleteResumeVersion(id: string, event: MouseEvent) {
+    event.stopPropagation();
+    if (!confirm('Delete this CV version?')) return;
+    this.api.deleteResume(id).subscribe({
+      next: () => this.loadResumes(),
+      error: (err) => console.error('Failed to delete CV version:', err)
+    });
   }
 
-  // Delegate save to auth service
-  protected saveClerkConfig() {
-    this.auth.saveClerkConfig(this.clerkPemPublicKey);
-    alert('Clerk parameters saved locally!');
+  protected downloadResumeVersion(resume: any, event: MouseEvent) {
+    event.stopPropagation();
+    const text = resume.cvText || '';
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${resume.fileName || 'cv-version'}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Clerk Profile Mount ─────────────────────────────────────────────────────
+
+  private mountClerkUserProfile(retries = 15) {
+    const Clerk = this.auth.getClerkInstance();
+    const container = document.getElementById('clerk-profile-container');
+    if (!Clerk || !container) {
+      if (retries > 0) setTimeout(() => this.mountClerkUserProfile(retries - 1), 200);
+      return;
+    }
+
+    // Always unmount first to force a clean re-render
+    try { Clerk.unmountUserProfile(container); } catch (_) {}
+    container.innerHTML = '';
+
+    try {
+      Clerk.mountUserProfile(container, {
+        appearance: {
+          elements: {
+            rootBox: { width: '100%' },
+            card: { boxShadow: 'none', border: 'none', background: 'transparent', width: '100%', padding: '0' }
+          },
+          variables: {
+            colorPrimary: '#FDBA5E',
+            colorBackground: 'transparent',
+            colorText: 'var(--text-primary)',
+            borderRadius: '12px'
+          }
+        }
+      });
+    } catch (error: any) {
+      if (retries > 0) {
+        setTimeout(() => this.mountClerkUserProfile(retries - 1), 200);
+      } else {
+        console.error('Failed to mount Clerk user profile:', error);
+      }
+    }
   }
 }

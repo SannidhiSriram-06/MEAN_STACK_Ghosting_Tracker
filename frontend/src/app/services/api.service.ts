@@ -1,75 +1,134 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, from } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
   private readonly baseUrl = 'http://localhost:5001/api';
 
-  // Auth header helper
-  private getHeaders(): HttpHeaders {
-    // If Clerk auth token is stored in local storage, append it
-    const token = localStorage.getItem('token');
-    if (token) {
-      return new HttpHeaders({
-        'Authorization': `Bearer ${token}`
-      });
-    }
-    // Default headers
-    return new HttpHeaders();
+  // Asynchronous auth headers helper to always fetch a fresh Clerk session token
+  private getRequestOptions(params?: HttpParams): Observable<{ headers: HttpHeaders; params?: HttpParams }> {
+    return from(this.auth.getFreshToken()).pipe(
+      switchMap(token => {
+        let headers = new HttpHeaders();
+        if (token) {
+          headers = headers.set('Authorization', `Bearer ${token}`);
+        }
+        return [{ headers, params }];
+      })
+    );
   }
 
   getApplications(status?: string, sort?: string): Observable<any[]> {
     let params = new HttpParams();
     if (status) params = params.set('status', status);
     if (sort) params = params.set('sort', sort);
-    return this.http.get<any[]>(`${this.baseUrl}/applications`, { headers: this.getHeaders(), params });
+    return this.getRequestOptions(params).pipe(
+      switchMap(options => this.http.get<any[]>(`${this.baseUrl}/applications`, options))
+    );
   }
 
   createApplication(application: any): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/applications`, application, { headers: this.getHeaders() });
+    return this.getRequestOptions().pipe(
+      switchMap(options => this.http.post<any>(`${this.baseUrl}/applications`, application, options))
+    );
   }
 
   updateApplication(id: string, application: any): Observable<any> {
-    return this.http.put<any>(`${this.baseUrl}/applications/${id}`, application, { headers: this.getHeaders() });
+    return this.getRequestOptions().pipe(
+      switchMap(options => this.http.put<any>(`${this.baseUrl}/applications/${id}`, application, options))
+    );
   }
 
   deleteApplication(id: string): Observable<any> {
-    return this.http.delete<any>(`${this.baseUrl}/applications/${id}`, { headers: this.getHeaders() });
+    return this.getRequestOptions().pipe(
+      switchMap(options => this.http.delete<any>(`${this.baseUrl}/applications/${id}`, options))
+    );
   }
 
-  checkGhosting(): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/applications/check-ghosting`, {}, { headers: this.getHeaders() });
+  checkGhosting(threshold?: number): Observable<any> {
+    let params = new HttpParams();
+    if (threshold !== undefined && threshold !== null) {
+      params = params.set('threshold', threshold.toString());
+    }
+    return this.getRequestOptions(params).pipe(
+      switchMap(options => this.http.post<any>(`${this.baseUrl}/applications/check-ghosting`, {}, options))
+    );
   }
 
   runFitScore(id: string, payload: { resumeId?: string; cvText?: string }): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/applications/${id}/fit-score`, payload, { headers: this.getHeaders() });
+    return this.getRequestOptions().pipe(
+      switchMap(options => this.http.post<any>(`${this.baseUrl}/applications/${id}/fit-score`, payload, options))
+    );
   }
 
-  uploadResume(formData: FormData): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/applications/upload-resume`, formData, { headers: this.getHeaders() });
+  uploadApplicationCv(id: string, file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('cvFile', file);
+    return this.getRequestOptions().pipe(
+      switchMap(options => this.http.post<any>(
+        `${this.baseUrl}/applications/${id}/cv-upload`,
+        formData,
+        { headers: options.headers } // don't set Content-Type; let browser set multipart boundary
+      ))
+    );
+  }
+
+  downloadApplicationCv(id: string): Observable<Blob> {
+    return this.getRequestOptions().pipe(
+      switchMap(options => this.http.get(
+        `${this.baseUrl}/applications/${id}/cv-download`,
+        { ...options, responseType: 'blob' }
+      ))
+    );
+  }
+
+  saveTextResume(payload: { versionName: string; cvText: string }): Observable<any> {
+    return this.getRequestOptions().pipe(
+      switchMap(options => this.http.post<any>(`${this.baseUrl}/applications/upload-resume`, payload, options))
+    );
+  }
+
+  deleteResume(id: string): Observable<any> {
+    return this.getRequestOptions().pipe(
+      switchMap(options => this.http.delete<any>(`${this.baseUrl}/applications/resumes/${id}`, options))
+    );
   }
 
   getResumes(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/applications/resumes/list`, { headers: this.getHeaders() });
+    return this.getRequestOptions().pipe(
+      switchMap(options => this.http.get<any[]>(`${this.baseUrl}/applications/resumes/list`, options))
+    );
   }
 
   deleteUserData(): Observable<any> {
-    return this.http.delete<any>(`${this.baseUrl}/applications/users/me/data`, { headers: this.getHeaders() });
+    return this.getRequestOptions().pipe(
+      switchMap(options => this.http.delete<any>(`${this.baseUrl}/applications/users/me/data`, options))
+    );
   }
 
   deleteAccount(): Observable<any> {
-    return this.http.delete<any>(`${this.baseUrl}/applications/users/me`, { headers: this.getHeaders() });
+    return this.getRequestOptions().pipe(
+      switchMap(options => this.http.delete<any>(`${this.baseUrl}/applications/users/me`, options))
+    );
   }
 
+  // Insights / Stats
   getStats(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/stats`, { headers: this.getHeaders() });
+    return this.getRequestOptions().pipe(
+      switchMap(options => this.http.get<any>(`${this.baseUrl}/insights/stats`, options))
+    );
   }
 
-  getSkillGap(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/insights/skill-gap`, { headers: this.getHeaders() });
+  getSkillGap(): Observable<any> {
+    return this.getRequestOptions().pipe(
+      switchMap(options => this.http.get<any>(`${this.baseUrl}/insights/skill-gap`, options))
+    );
   }
 }
