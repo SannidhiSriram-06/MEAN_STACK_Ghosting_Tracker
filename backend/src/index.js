@@ -61,30 +61,36 @@ app.get('/api/cron/ghost-scan', async (req, res) => {
 });
 
 // Daily scheduled cron job (runs every day at midnight '0 0 * * *')
-cron.schedule('0 0 * * *', async () => {
-  console.log('Running daily automated ghosting check...');
-  try {
-    const updatedCount = await scanAndFlagGhosted();
-    console.log(`Daily ghosting scan complete. Updated ${updatedCount} applications.`);
-  } catch (error) {
-    console.error('Failed to execute daily ghosting cron job:', error);
-  }
-});
+if (!process.env.VERCEL) {
+  cron.schedule('0 0 * * *', async () => {
+    console.log('Running daily automated ghosting check...');
+    try {
+      const updatedCount = await scanAndFlagGhosted();
+      console.log(`Daily ghosting scan complete. Updated ${updatedCount} applications.`);
+    } catch (error) {
+      console.error('Failed to execute daily ghosting cron job:', error);
+    }
+  });
+}
 
 // Database connection & Server Boot
 mongoose.connect(MONGO_URI)
   .then(() => {
     console.log('Connected to MongoDB successfully.');
-    app.listen(PORT, () => {
-      console.log(`Backend server is running on port ${PORT}`);
-    });
+    if (!process.env.VERCEL) {
+      app.listen(PORT, () => {
+        console.log(`Backend server is running on port ${PORT}`);
+      });
+    }
   })
   .catch(err => {
     console.error('MongoDB connection error:', err);
     // Boot server anyway for health checks even if DB is offline
-    app.listen(PORT, () => {
-      console.log(`Backend server running on port ${PORT} (MongoDB offline)`);
-    });
+    if (!process.env.VERCEL) {
+      app.listen(PORT, () => {
+        console.log(`Backend server running on port ${PORT} (MongoDB offline)`);
+      });
+    }
   });
 
 module.exports = app; // For testing
