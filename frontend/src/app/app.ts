@@ -126,7 +126,12 @@ export class App implements OnInit {
   private mountClerkSignIn(retries = 10) {
     const Clerk = this.auth.getClerkInstance();
     const container = document.getElementById('clerk-auth-container');
-    if (!Clerk || !container) return;
+    if (!Clerk || !container) {
+      if (retries > 0) {
+        setTimeout(() => this.mountClerkSignIn(retries - 1), 500);
+      }
+      return;
+    }
 
     // Check if Clerk is already mounted in this container to prevent duplicate mounts
     if (container.querySelector('.cl-rootBox')) {
