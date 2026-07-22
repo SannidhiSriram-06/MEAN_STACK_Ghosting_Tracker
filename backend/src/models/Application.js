@@ -62,12 +62,24 @@ const applicationSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  cvPdf: {
+    originalName: { type: String, default: null },
+    mimeType:     { type: String, default: null },
+    size:         { type: Number, default: null },
+    data:         { type: Buffer, default: null }
+  },
   fitScore: {
     score: { type: Number, default: null },
-    verdict: { type: String, enum: ['STRONG_MATCH', 'COIN_FLIP', 'REACH', null], default: null },
+    verdict: { type: String, default: null },
     rationale: { type: String, default: '' },
+    strengthSummary: { type: String, default: '' },
     matchedSkills: [{ type: String }],
     missingSkills: [{ type: String }],
+    redFlags: [{ type: String }],
+    improvements: [{ type: String }],
+    examples: [{ type: String }],
+    actionableTips: [{ type: String }],
+    interviewPrepTips: [{ type: String }],
     lowConfidence: { type: Boolean, default: false },
     scoredAt: { type: Date }
   },
@@ -76,6 +88,10 @@ const applicationSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'ResumeVersion',
     default: null
+  },
+  cvUsed: {
+    type: String,
+    default: ''
   }
 }, {
   timestamps: true

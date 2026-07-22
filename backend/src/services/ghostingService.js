@@ -33,17 +33,20 @@ async function getGhostingThreshold() {
  * Checks all active job applications and automatically flags them as 'ghosted'
  * if they exceed the threshold time since the last status change.
  */
-async function scanAndFlagGhosted() {
-  const thresholdDays = await getGhostingThreshold();
+async function scanAndFlagGhosted(userId = null, overrideThresholdDays = null) {
+  const thresholdDays = overrideThresholdDays !== null ? overrideThresholdDays : await getGhostingThreshold();
   const referenceDate = new Date();
   
   // Terminal states are 'offer', 'rejected', and already 'ghosted'
   const activeStatuses = ['applied', 'screening', 'interview'];
+  const query = { status: { $in: activeStatuses } };
+  
+  if (userId) {
+    query.userId = userId;
+  }
   
   // Find all candidate applications
-  const candidates = await Application.find({
-    status: { $in: activeStatuses }
-  });
+  const candidates = await Application.find(query);
 
   // Filter to only those that have exceeded the threshold
   const toGhost = candidates.filter(app =>

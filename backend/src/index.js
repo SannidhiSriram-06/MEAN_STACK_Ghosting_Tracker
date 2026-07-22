@@ -32,6 +32,13 @@ app.get('/health', (req, res) => {
 app.use('/api/applications', applicationsRouter);
 app.use('/api/insights', insightsRouter);
 
+app.get('/api/auth-config', (req, res) => {
+  res.json({
+    clerkEnabled: !!process.env.CLERK_PEM_PUBLIC_KEY,
+    publishableKey: process.env.CLERK_PEM_PUBLIC_KEY || ''
+  });
+});
+
 // Daily scheduled cron job (runs every day at midnight '0 0 * * *')
 cron.schedule('0 0 * * *', async () => {
   console.log('Running daily automated ghosting check...');

@@ -58,9 +58,9 @@ function calculateKeywordOverlap(cvText = '', jdText = '') {
  * REACH: 0-44
  */
 function getVerdictFromScore(score) {
-  if (score >= 75) return 'STRONG_MATCH';
-  if (score >= 45) return 'COIN_FLIP';
-  return 'REACH';
+  if (score >= 75) return 'you will get an interview callback-strong fit';
+  if (score >= 45) return '50-50 chances needs cv improvement';
+  return 'why did you even apply bruh 😭';
 }
 
 /**
@@ -72,10 +72,12 @@ async function analyzeFit(cvText = '', jdText = '', retryCount = 1) {
   if (!cvText.trim() || !jdText.trim()) {
     return {
       score: 0,
-      verdict: 'REACH',
+      verdict: 'why did you even apply bruh 😭',
       rationale: 'Missing CV or Job Description text.',
       matchedSkills: [],
       missingSkills: [],
+      improvements: ['Ensure CV and Job Description are provided before running checks.'],
+      examples: [],
       lowConfidence: false,
       scoredAt: new Date()
     };
@@ -86,28 +88,49 @@ async function analyzeFit(cvText = '', jdText = '', retryCount = 1) {
 
   // If Groq is not configured, return fallback immediately
   if (!groqClient) {
+    const improvements = overlapResult.missing.map(skill => `Add details about your experience working with ${skill} in a production environment.`);
+    const examples = overlapResult.missing.map(skill => `E.g. 'Developed and optimized backend modules using ${skill}, improving performance by 25%.'`);
+
     return {
       score: overlapResult.score,
       verdict: getVerdictFromScore(overlapResult.score),
       rationale: `Computed via keyword overlap cross-check (Groq API key not set). Found matches for: ${overlapResult.matched.join(', ') || 'none'}.`,
       matchedSkills: overlapResult.matched,
       missingSkills: overlapResult.missing,
+      improvements: improvements.length > 0 ? improvements : ['Enhance tech keywords matches by updating CV with relevant libraries.'],
+      examples: examples.length > 0 ? examples : ['E.g. "Integrated REST APIs and mapped JSON data formats natively in Angular."'],
       lowConfidence: false,
       scoredAt: new Date()
     };
   }
 
   try {
-    const systemPrompt = `You are a technical recruiting assistant. Compare the candidate's CV text and the Job Description (JD).
-Evaluate the match alignment on a scale of 0 to 100.
-Identify matched and missing skills. Write a short, single-sentence rationale.
-You MUST return ONLY a JSON response in the following schema:
+    const systemPrompt = `You are a senior technical recruiter and career coach. Analyze the candidate's CV vs the Job Description deeply.
+Return ONLY a JSON object with this exact schema — no markdown, no prose outside JSON:
 {
-  "score": 75,
-  "rationale": "The candidate has strong front-end experience but lacks required AWS configuration knowledge.",
-  "matchedSkills": ["javascript", "angular", "css"],
-  "missingSkills": ["aws", "docker"]
-}`;
+  "score": 72,
+  "rationale": "One crisp sentence summarising the overall alignment.",
+  "strengthSummary": "2-3 sentences highlighting the candidate's strongest points relevant to this role.",
+  "matchedSkills": ["skill1", "skill2"],
+  "missingSkills": ["skill3", "skill4"],
+  "redFlags": ["Specific concern 1 a recruiter would notice", "Specific concern 2"],
+  "improvements": [
+    "Concrete resume bullet improvement action (be specific — mention skill name and how to frame it)",
+    "Another improvement"
+  ],
+  "examples": [
+    "Exact rewritten bullet point or phrase for their CV, e.g. 'Led migration of monolith to Docker microservices on AWS ECS, reducing deploy time by 60%'"
+  ],
+  "actionableTips": [
+    "Specific thing to do NOW to strengthen this application (e.g. add a GitHub project, get a cert, tailor the summary)",
+    "Another tip"
+  ],
+  "interviewPrepTips": [
+    "Likely interview question for this role and how to frame the answer using their background",
+    "Another likely interview question with framing advice"
+  ]
+}
+Be direct, specific, and genuinely helpful. Avoid generic advice. Reference the actual JD requirements and CV content.`;
 
     const userPrompt = `### CANDIDATE CV TEXT:\n${cvText}\n\n### JOB DESCRIPTION:\n${jdText}`;
 
@@ -132,8 +155,14 @@ You MUST return ONLY a JSON response in the following schema:
     // Defensive parsing & validation of required fields
     const score = Math.max(0, Math.min(100, Number(parsedResult.score) || 0));
     const rationale = parsedResult.rationale || 'Alignment evaluated successfully.';
+    const strengthSummary = parsedResult.strengthSummary || '';
     const matchedSkills = Array.isArray(parsedResult.matchedSkills) ? parsedResult.matchedSkills : [];
     const missingSkills = Array.isArray(parsedResult.missingSkills) ? parsedResult.missingSkills : [];
+    const redFlags = Array.isArray(parsedResult.redFlags) ? parsedResult.redFlags : [];
+    const improvements = Array.isArray(parsedResult.improvements) ? parsedResult.improvements : [];
+    const examples = Array.isArray(parsedResult.examples) ? parsedResult.examples : [];
+    const actionableTips = Array.isArray(parsedResult.actionableTips) ? parsedResult.actionableTips : [];
+    const interviewPrepTips = Array.isArray(parsedResult.interviewPrepTips) ? parsedResult.interviewPrepTips : [];
     
     // Cross-check: Low confidence if LLM score and keyword score diverge by > 30 points
     const scoreDifference = Math.abs(score - overlapResult.score);
@@ -143,8 +172,14 @@ You MUST return ONLY a JSON response in the following schema:
       score,
       verdict: getVerdictFromScore(score),
       rationale,
+      strengthSummary,
       matchedSkills: matchedSkills.length > 0 ? matchedSkills : overlapResult.matched,
       missingSkills: missingSkills.length > 0 ? missingSkills : overlapResult.missing,
+      redFlags,
+      improvements,
+      examples,
+      actionableTips,
+      interviewPrepTips,
       lowConfidence,
       scoredAt: new Date()
     };
@@ -155,6 +190,9 @@ You MUST return ONLY a JSON response in the following schema:
       return analyzeFit(cvText, jdText, retryCount - 1);
     }
     
+    const improvements = overlapResult.missing.map(skill => `Add details about your experience working with ${skill} in a production environment.`);
+    const examples = overlapResult.missing.map(skill => `E.g. 'Developed and optimized backend modules using ${skill}, improving performance by 25%.'`);
+
     // Hard fallback: return deterministic result
     return {
       score: overlapResult.score,
@@ -162,6 +200,8 @@ You MUST return ONLY a JSON response in the following schema:
       rationale: `Fallback: LLM connection failed. Determined by keyword overlap scan.`,
       matchedSkills: overlapResult.matched,
       missingSkills: overlapResult.missing,
+      improvements: improvements.length > 0 ? improvements : ['Enhance tech keywords matches by updating CV with relevant libraries.'],
+      examples: examples.length > 0 ? examples : ['E.g. "Integrated REST APIs and mapped JSON data formats natively in Angular."'],
       lowConfidence: true,
       scoredAt: new Date()
     };
