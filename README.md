@@ -8,21 +8,7 @@
 
 **JobTrack** is an enterprise-grade MEAN-stack job search portal designed to automate application tracking, detect recruiter ghosting via daily background cron scans, evaluate resume alignment using LLM-powered Groq fit-checks, authenticate users via Clerk, and deploy serverlessly on Vercel.
 
----
 
-## 📊 Project Completion & Progress Tracker
-
-| Stage / Feature | Description | Status | Completion |
-| :--- | :--- | :---: | :---: |
-| **Phase 1: Architecture & Docker Stack** | Docker Compose orchestration, Angular 21, Express Node 20, MongoDB 7 setup | `COMPLETED` | 100% |
-| **Phase 2: CRUD & Status Timeline Engine** | Application logging, stage updates, audit history timeline | `COMPLETED` | 100% |
-| **Phase 3: Automated Ghosting Scanner** | Daily `node-cron` background scanner marking stale applications | `COMPLETED` | 100% |
-| **Phase 4: Groq AI Fit-Check Engine** | LLaMA 3.3 fit-check parser with deterministic keyword overlap fallback | `COMPLETED` | 100% |
-| **Phase 5: Insights & Aggregations** | MongoDB aggregation pipelines for response rates, speed, and skill gaps | `COMPLETED` | 100% |
-| **Phase 6: Clerk Auth & Vercel Config** | Clerk JWT verification with local mock fallbacks and Vercel serverless configuration | `COMPLETED` | 100% |
-| **UI/UX Overhaul** | Plus Jakarta Sans font, Steel-Blue/Teal theme, dynamic SVG charts & Slide-Over | `COMPLETED` | 100% |
-
----
 
 ## 🚀 Quick Start (Local Setup)
 

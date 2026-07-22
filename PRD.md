@@ -13,7 +13,7 @@ Manually tracking 40–100+ job applications in a spreadsheet doesn't surface:
 
 ## 3. Goals (in scope)
 - CRUD for job applications (company, role, date applied, status, JD text, notes)
-- Automatic "ghosting" detection: an application with no status change past a configurable threshold (e.g. 21 days) is flagged as ghosted
+- Automatic "ghosting" detection: an application with no status change past a configurable threshold (e.g. 10 days) is flagged as ghosted
 - LLM-based fit score: given a resume and a job description, return a numeric fit score + short rationale
 - Stats dashboard: counts by status, average time-to-response, ghosting rate, fit-score distribution
 - User Authentication: Secure sign-up/login flows powered by Clerk
@@ -47,4 +47,3 @@ Primary user: the developer themself, a final-year CS student actively job hunti
 ## 8. Key Risks
 - LLM API cost/rate limits during demo — mitigate with caching or a small local test set
 - Ghosting threshold is a heuristic, not ground truth — must be clearly framed as configurable, not "smart"
-- Scope creep toward auth/multi-user — explicitly resist until core phases are done

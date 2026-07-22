@@ -23,5 +23,5 @@
 
 ## Local dev ports
 - MongoDB: `27017`
-- Backend (Express): `5000`
+- Backend (Express): `5001`
 - Frontend (Angular dev server): `4200`

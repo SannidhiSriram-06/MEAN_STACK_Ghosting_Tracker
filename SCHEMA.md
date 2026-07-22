@@ -7,6 +7,7 @@
 ```js
 {
   _id: ObjectId,
+  userId: String,           // Clerk User ID, required
   company: String,          // required
   role: String,             // required
   jobDescription: String,   // raw JD text, used later for fit-scoring
@@ -16,9 +17,19 @@
   location: String,
   source: String,           // e.g. "LinkedIn", "referral", "campus", "cold outreach"
   notes: String,
+  cvText: String,           // Extracted plain text from the uploaded CV PDF
+  cvPdf: {                  // The physical PDF file stored as an embedded buffer
+    data: Buffer,
+    contentType: String,
+    originalName: String
+  },
   fitScore: {
     score: Number,          // 0–100, null until Phase 4 runs
-    rationale: String,
+    strengthSummary: String,
+    redFlags: [String],
+    actionableTips: [String],
+    interviewPrepTips: [String],
+    missingSkills: [String],
     scoredAt: Date
   },
   createdAt: Date,
@@ -31,22 +42,13 @@
 - `lastStatusChange` is distinct from `updatedAt` — `updatedAt` changes on any edit (e.g. fixing a typo in notes), `lastStatusChange` only changes when `status` itself changes. This distinction matters for ghosting logic accuracy.
 - `fitScore` is a nested object, null/absent until the user triggers a fit-score request in Phase 4. Kept nested rather than flattened so it's easy to re-score without touching other fields.
 
-## Collection: `config` (single document, Phase 3+)
-
-```js
-{
-  _id: ObjectId,
-  ghostingThresholdDays: Number,  // default 21
-  updatedAt: Date
-}
-```
-
-Kept as a single-document collection rather than hardcoding the threshold, so it's adjustable without a redeploy — small thing, but defensible as "configurable business logic" in a viva.
+## Config
+Ghosting threshold is managed via environment variables (`GHOST_THRESHOLD_DAYS` default 10) rather than a config collection, simplifying the database schema while retaining configurability.
 
 ## Indexes (Phase 2+)
 - `applications.status` — for fast filtering on the list/stats views
 - `applications.lastStatusChange` — for the ghosting-detection query to run efficiently as data grows
 
 ## Out of scope for schema (for now)
-- No `users` collection — single-user app, no auth in current phases
-- No separate `companies` collection — company is a plain string field on `applications`; normalizing into a separate collection is a possible future refactor, not needed at this scale
+- No `users` collection — user accounts and authentication are handled entirely by Clerk. We just store the `userId` in Mongo.
+- No separate `companies` collection — company is a plain string field on `applications`; normalizing into a separate collection is a possible future refactor, not needed at this scale.
