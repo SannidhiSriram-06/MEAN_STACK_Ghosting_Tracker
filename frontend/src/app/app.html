@@ -11,72 +11,111 @@
 
 <!-- Watermelon UI Auth-13 Screen -->
 @if (!auth.isAuthenticated()) {
-  <div class="auth-13-wrapper">
-    <div class="auth-13-glow"></div>
-
-    <div class="auth-13-card">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
-        <div style="display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text-primary);">
-          <i class="fa-solid fa-briefcase" style="color: var(--accent-primary);"></i> JobTrack
-        </div>
-        <span style="font-size: 11px; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,0.06); color: var(--text-tertiary);">MEAN Stack</span>
-      </div>
-
-      <!-- Watermelon Auth-13 Tabs -->
-      <div class="auth-13-tabs">
-        <div class="auth-13-tab" [class.active]="authMode() === 'login'" (click)="authMode.set('login')">Log In</div>
-        <div class="auth-13-tab" [class.active]="authMode() === 'signup'" (click)="authMode.set('signup')">Sign Up</div>
-      </div>
-
-      @if (authError) {
-        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px 12px; border-radius: var(--border-radius-sm); font-size: 13px; color: #ef4444; margin-bottom: 16px;">
-          {{ authError }}
-        </div>
-      }
-
-      <!-- Form Inputs -->
-      <form (submit)="handleAuthSubmit(); $event.preventDefault()">
-        <div class="form-group" style="margin-bottom: 16px;">
-          <label for="authEmail" style="font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block;">Work Email</label>
-          <input type="email" id="authEmail" class="form-control" name="email" [(ngModel)]="authEmail" required placeholder="name@company.com">
-        </div>
-
-        <div class="form-group" style="margin-bottom: 20px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-            <label for="authPassword" style="font-size: 12px; font-weight: 500; color: var(--text-secondary);">Password</label>
-            <button type="button" (click)="showPassword.update(v => !v)" style="background: none; border: none; font-size: 11px; color: var(--accent-primary); cursor: pointer; padding: 0;">
-              {{ showPassword() ? 'Hide' : 'Show' }}
-            </button>
-          </div>
-          <input [type]="showPassword() ? 'text' : 'password'" id="authPassword" class="form-control" name="password" [(ngModel)]="authPassword" required placeholder="••••••••">
-        </div>
-
-        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">
-          {{ authMode() === 'login' ? 'Sign in to Account' : 'Create Candidate Account' }}
-        </button>
-      </form>
-
-      <!-- SSO Social Mock Dividers -->
-      <div style="display: flex; align-items: center; gap: 12px; margin: 20px 0;">
-        <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
-        <span style="font-size: 11px; color: var(--text-tertiary); text-transform: uppercase;">Or continue with</span>
-        <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
-      </div>
-
-      <div style="display: flex; gap: 10px;">
-        <button type="button" class="auth-sso-btn" (click)="handleAuthSubmit()">
-          <i class="fa-brands fa-google"></i> Google
-        </button>
-        <button type="button" class="auth-sso-btn" (click)="handleAuthSubmit()">
-          <i class="fa-brands fa-github"></i> GitHub
-        </button>
-      </div>
-
-      <p style="font-size: 11px; color: var(--text-tertiary); text-align: center; margin-top: 20px; line-height: 1.4;">
-        By signing in, you agree to JobTrack's <a style="color: var(--text-secondary); text-decoration: underline;">Terms of Service</a> &bull; <a style="color: var(--text-secondary); text-decoration: underline;">Privacy Policy</a>.
-      </p>
-    </div>
+  <div style="position: absolute; top: 24px; right: 24px; z-index: 100;">
+    <app-theme-toggle></app-theme-toggle>
   </div>
+  @if (auth.isClerkConfigured()) {
+    <div class="auth-07-root">
+      <!-- Left Form Panel -->
+      <div class="auth-07-left">
+        <!-- Logo Branding -->
+        <div style="position: absolute; top: 32px; left: 32px; display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 20px; color: var(--text-primary);">
+          <i class="fa-solid fa-briefcase" style="color: #FDBA5E;"></i> JobTrack
+        </div>
+
+        <div style="width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 32px;">
+          <!-- Title & Subtitle -->
+          <div style="text-align: center;">
+            <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 600; tracking-tight: -0.025em; color: var(--text-primary);">
+              Create your Account
+            </h1>
+            <p style="margin: 0; font-size: 14px; color: var(--text-secondary);">
+              Let's get started with your 30 days free trial
+            </p>
+          </div>
+
+          <!-- Clerk mount container -->
+          <div id="clerk-auth-container" style="min-height: 380px; display: flex; align-items: center; justify-content: center; width: 100%;">
+            <div style="color: var(--text-secondary); text-align: center;">
+              <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 12px; color: var(--accent-primary);"></i>
+              <p>Loading Clerk authentication...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Cover Panel -->
+      <div class="auth-07-right">
+        <div style="position: relative; height: 100%; width: 100%; overflow: hidden; border-radius: 32px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);">
+          <img src="https://assets.watermelon.sh/auth-7.avif" alt="Abstract cover" style="position: absolute; inset: 0; height: 100%; width: 100%; object-fit: cover; pointer-events: none;" />
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="auth-13-wrapper">
+      <div class="auth-13-glow"></div>
+
+      <div class="auth-13-card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text-primary);">
+            <i class="fa-solid fa-briefcase" style="color: var(--accent-primary);"></i> JobTrack
+          </div>
+          <span style="font-size: 11px; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,0.06); color: var(--text-tertiary);">MEAN Stack</span>
+        </div>
+
+        <!-- Mock Form -->
+        <!-- Watermelon Auth-13 Tabs -->
+        <div class="auth-13-tabs">
+          <div class="auth-13-tab" [class.active]="authMode() === 'login'" (click)="authMode.set('login')">Log In</div>
+          <div class="auth-13-tab" [class.active]="authMode() === 'signup'" (click)="authMode.set('signup')">Sign Up</div>
+        </div>
+
+        @if (authError) {
+          <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); padding: 10px 12px; border-radius: var(--border-radius-sm); font-size: 13px; color: #ef4444; margin-bottom: 16px;">
+            {{ authError }}
+          </div>
+        }
+
+        <!-- Form Inputs -->
+        <form (submit)="handleAuthSubmit(); $event.preventDefault()">
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label for="authEmail" style="font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; display: block;">Work Email</label>
+            <input type="email" id="authEmail" class="form-control" name="email" [(ngModel)]="authEmail" required placeholder="name@company.com">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <label for="authPassword" style="font-size: 12px; font-weight: 500; color: var(--text-secondary);">Password</label>
+              <button type="button" (click)="showPassword.update(v => !v)" style="background: none; border: none; font-size: 11px; color: var(--accent-primary); cursor: pointer; padding: 0;">
+                {{ showPassword() ? 'Hide' : 'Show' }}
+              </button>
+            </div>
+            <input [type]="showPassword() ? 'text' : 'password'" id="authPassword" class="form-control" name="password" [(ngModel)]="authPassword" required placeholder="••••••••">
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">
+            {{ authMode() === 'login' ? 'Sign in to Account' : 'Create Candidate Account' }}
+          </button>
+        </form>
+
+        <!-- SSO Social Mock Dividers -->
+        <div style="display: flex; align-items: center; gap: 12px; margin: 20px 0;">
+          <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
+          <span style="font-size: 11px; color: var(--text-tertiary); text-transform: uppercase;">Or continue with</span>
+          <div style="flex: 1; height: 1px; background: var(--border-subtle);"></div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="auth-sso-btn" (click)="handleAuthSubmit()">
+            <i class="fa-brands fa-google"></i> Google
+          </button>
+          <button type="button" class="auth-sso-btn" (click)="handleAuthSubmit()">
+            <i class="fa-brands fa-github"></i> GitHub
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 } @else {
   <!-- Main Application Shell -->
   <div class="app-container">
@@ -113,7 +152,7 @@
           </a>
         </li>
         <li>
-          <a class="nav-item" [class.active]="activeTab() === 'settings'" (click)="changeTab('settings'); loadClerkConfig()">
+          <a class="nav-item" [class.active]="activeTab() === 'settings'" (click)="changeTab('settings')">
             <i class="fa-solid fa-gears"></i>
             <span>Settings</span>
           </a>
@@ -132,9 +171,12 @@
           <span class="user-name">{{ auth.currentUser()?.name || 'Candidate' }}</span>
           <span class="user-email">{{ auth.currentUser()?.email || 'mock@example.com' }}</span>
         </div>
-        <button class="logout-btn" (click)="auth.logout()" title="Sign Out">
-          <i class="fa-solid fa-right-from-bracket"></i>
-        </button>
+        <div style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
+          <app-theme-toggle></app-theme-toggle>
+          <button class="logout-btn" (click)="auth.logout()" title="Sign Out">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
       </div>
     </aside>
     
@@ -186,7 +228,7 @@
           <app-theme-toggle></app-theme-toggle>
 
           <!-- Subdued Clerk Status indicator -->
-          <div class="aws-config-status" [class.aws-status-active]="auth.isClerkConfigured()" [class.aws-status-mock]="!auth.isClerkConfigured()">
+          <div class="clerk-status-indicator" [class.clerk-status-active]="auth.isClerkConfigured()" [class.clerk-status-mock]="!auth.isClerkConfigured()">
             {{ auth.isClerkConfigured() ? 'Clerk Active' : 'Local Mock' }}
           </div>
           
@@ -278,35 +320,27 @@
                 }
               </div>
             </div>
-
-            <!-- Skill Gap Frequency -->
-            <div class="glass-panel">
-              <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 15px; font-weight: 600;">Top Missing Skill Gaps</h3>
-              <div class="skills-list">
-                @for (gap of skillGap(); track gap._id) {
-                  <span class="pill-badge pill-rejected">
-                    {{ gap._id }} &bull; {{ gap.count }} requests
-                  </span>
-                } @empty {
-                  <p style="font-size: 13px; color: var(--text-tertiary); margin: 0;">No skill gaps detected yet. Run AI Fit Check on applications to populate.</p>
-                }
-              </div>
-            </div>
           </div>
         }
 
         <!-- VIEW 2: KANBAN BOARD -->
         @if (activeTab() === 'kanban') {
-          <div class="kanban-board">
+          <div class="kanban-board" cdkDropListGroup>
             @for (column of [
-              { id: 'applied', label: 'Applied', icon: 'fa-folder' },
-              { id: 'screening', label: 'Screening', icon: 'fa-magnifying-glass' },
-              { id: 'interview', label: 'Interview', icon: 'fa-comments' },
-              { id: 'offer', label: 'Offer', icon: 'fa-trophy' },
-              { id: 'rejected', label: 'Rejected', icon: 'fa-circle-xmark' },
-              { id: 'ghosted', label: 'Ghosted', icon: 'fa-ghost' }
+              { id: 'applied', label: 'Applied', icon: 'fa-folder', accent: 'applied' },
+              { id: 'screening', label: 'Screening', icon: 'fa-magnifying-glass', accent: 'screening' },
+              { id: 'interview', label: 'Interview', icon: 'fa-comments', accent: 'interview' },
+              { id: 'offer', label: 'Offer', icon: 'fa-trophy', accent: 'offer' },
+              { id: 'rejected', label: 'Rejected', icon: 'fa-circle-xmark', accent: 'rejected' },
+              { id: 'ghosted', label: 'Ghosted', icon: 'fa-ghost', accent: 'ghosted' }
             ]; track column.id) {
-              <div class="kanban-column">
+              <div class="kanban-column" 
+                   [class]="'kanban-column-' + column.accent"
+                   cdkDropList
+                   [id]="column.id"
+                   [cdkDropListData]="getApplicationsByStatus(column.id)"
+                   (cdkDropListDropped)="onCardDrop($event)">
+                
                 <div class="kanban-header">
                   <span class="kanban-title">
                     <i class="fa-solid {{ column.icon }}"></i> {{ column.label }}
@@ -316,20 +350,50 @@
 
                 <div class="kanban-cards">
                   @for (app of getApplicationsByStatus(column.id); track app._id) {
-                    <div class="kanban-card" (click)="openDetailModal(app)">
-                      <div class="kanban-card-company">{{ app.company }}</div>
+                    <div class="kanban-card fade-in" 
+                         cdkDrag 
+                         [cdkDragData]="app"
+                         (click)="openDetailModal(app)">
+                      
+                      <!-- Card Tag Chip -->
+                      <div class="kanban-card-tag-wrapper">
+                        <span class="kanban-card-tag-dot" [class]="'tag-' + column.accent"></span>
+                        <div class="kanban-card-company">{{ app.company }}</div>
+                      </div>
+
                       <div class="kanban-card-role">{{ app.role }}</div>
+                      
                       <div class="kanban-card-meta">
-                        <span><i class="fa-solid fa-calendar-day"></i> {{ app.dateApplied | date:'MMM d' }}</span>
+                        <span class="meta-date">
+                          <i class="fa-solid fa-calendar-day"></i> {{ app.dateApplied | date:'MMM d' }}
+                        </span>
+                        
+                        <span class="meta-days">
+                          {{ getDaysInStage(app) === 0 ? 'Today' : getDaysInStage(app) + 'd in stage' }}
+                        </span>
+                      </div>
+
+                      <div class="kanban-card-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                        <!-- Aging Indicator -->
+                        @if (isAging(app)) {
+                          <span class="aging-indicator animate-pulse" title="Stale application warning" style="color: var(--accent-warning); font-size: 11px; display: flex; align-items: center; gap: 4px; font-weight: 500;">
+                            <i class="fa-solid fa-clock-rotate-left"></i> {{ getDaysInStage(app) }}d
+                          </span>
+                        } @else {
+                          <span></span>
+                        }
+
                         @if (app.fitScore?.score !== null && app.fitScore?.score !== undefined) {
-                          <span class="pill-badge pill-offer num-tabular">{{ app.fitScore.score }}%</span>
+                          <span class="pill-badge pill-offer num-tabular" style="font-size: 10px; padding: 2px 6px;">{{ app.fitScore.score }}%</span>
                         }
                       </div>
                     </div>
                   } @empty {
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 160px; color: var(--text-tertiary); text-align: center;">
-                      <i class="fa-solid fa-inbox" style="font-size: 20px; margin-bottom: 8px; opacity: 0.4;"></i>
-                      <span style="font-size: 12px;">No applications yet</span>
+                    <div class="kanban-empty-state">
+                      <div class="empty-icon-wrapper">
+                        <i class="fa-solid fa-folder-open"></i>
+                      </div>
+                      <span>Drop cards here</span>
                     </div>
                   }
                 </div>
@@ -394,48 +458,143 @@
 
         <!-- VIEW 4: SETTINGS (2-Column Dense Layout) -->
         @if (activeTab() === 'settings') {
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
-            <!-- Left Column: Resume Upload -->
-            <div class="glass-panel">
-              <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 15px; font-weight: 600;">Resume PDF Management</h3>
-              
-              <div class="form-group">
-                <label>Select Resume PDF</label>
-                <input type="file" (change)="onFileSelected($event)" accept="application/pdf" class="form-control">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start;">
+
+            <!-- Left Column: CV Text Version Manager -->
+            <div class="glass-panel" style="padding: 24px; border-radius: 20px;">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <i class="fa-solid fa-file-lines" style="color: var(--accent-primary); font-size: 18px;"></i>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">CV Text Versions</h3>
+              </div>
+              <p style="margin: 0 0 20px 0; font-size: 12px; color: var(--text-tertiary); line-height: 1.5;">
+                Paste your CV as plain text for accurate AI Fit Checks. Save multiple named versions (e.g. "TCS Tailored", "SWE General") and pick any when running an analysis.
+              </p>
+
+              <!-- Version Name Input -->
+              <div style="margin-bottom: 10px;">
+                <label style="font-size: 12px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 6px;">
+                  <i class="fa-solid fa-tag" style="margin-right: 4px;"></i> Version Name <span style="color: var(--text-tertiary); font-weight: 400;">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  [(ngModel)]="newCvVersionName"
+                  placeholder='e.g. "TCS Tailored", "SWE General"'
+                  style="width: 100%; padding: 9px 12px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); color: var(--text-primary); font-size: 13px; box-sizing: border-box; outline: none; transition: border-color 0.15s;"
+                />
               </div>
 
-              <button class="btn btn-primary" (click)="uploadSelectedResume()" [disabled]="!selectedFile || uploadingResume()">
-                {{ uploadingResume() ? 'Uploading PDF...' : 'Upload Resume Version' }}
-              </button>
+              <!-- CV Text Textarea -->
+              <div style="margin-bottom: 12px;">
+                <label style="font-size: 12px; font-weight: 500; color: var(--text-secondary); display: block; margin-bottom: 6px;">
+                  <i class="fa-solid fa-paste" style="margin-right: 4px;"></i> Paste Full CV Text
+                </label>
+                <textarea
+                  [(ngModel)]="newCvText"
+                  rows="10"
+                  placeholder="Paste your entire CV here — all sections: education, experience, skills, projects, certifications..."
+                  style="width: 100%; padding: 10px 12px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); color: var(--text-primary); font-size: 12px; line-height: 1.6; box-sizing: border-box; resize: vertical; outline: none; font-family: inherit; transition: border-color 0.15s;"
+                ></textarea>
+                <div style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px; text-align: right;">
+                  {{ newCvText.length }} characters
+                </div>
+              </div>
 
-              @if (fileUploadStatus) {
-                <p style="font-size: 12px; color: var(--accent-success); margin-top: 10px;">{{ fileUploadStatus }}</p>
+              <!-- Error / Success -->
+              @if (cvSaveError) {
+                <p style="font-size: 12px; color: var(--accent-danger); margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
+                  <i class="fa-solid fa-circle-xmark"></i> {{ cvSaveError }}
+                </p>
+              }
+              @if (cvSaveStatus) {
+                <p style="font-size: 12px; color: var(--accent-success); margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
+                  <i class="fa-solid fa-circle-check"></i> {{ cvSaveStatus }}
+                </p>
               }
 
-              <h4 style="margin-top: 24px; margin-bottom: 12px; font-size: 13px; font-weight: 600;">Uploaded Resumes</h4>
+              <!-- Save Button -->
+              <button
+                class="btn btn-primary"
+                (click)="saveCvVersion()"
+                [disabled]="savingCvVersion() || newCvText.trim().length < 20"
+                style="width: 100%; height: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px;"
+              >
+                @if (savingCvVersion()) {
+                  <i class="fa-solid fa-spinner fa-spin"></i> Saving...
+                } @else {
+                  <i class="fa-solid fa-floppy-disk"></i> Save CV Version
+                }
+              </button>
+
+              <!-- Saved Versions List -->
+              <h4 style="margin: 28px 0 12px 0; font-size: 13px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-layer-group" style="color: var(--accent-primary);"></i>
+                Saved Versions
+                <span style="background: var(--bg-surface-raised); border: 1px solid var(--border-subtle); border-radius: 20px; padding: 1px 8px; font-size: 11px; color: var(--text-secondary); font-weight: 500;">
+                  {{ resumes().length }}
+                </span>
+              </h4>
               <div style="display: flex; flex-direction: column; gap: 8px;">
                 @for (resume of resumes(); track resume._id) {
-                  <div style="padding: 10px 12px; background: var(--bg-surface-raised); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); font-size: 12px; display: flex; justify-content: space-between;">
-                    <span><i class="fa-solid fa-file-pdf"></i> {{ resume.fileName }}</span>
-                    <span style="color: var(--text-tertiary);">{{ resume.createdAt | date:'shortDate' }}</span>
+                  <div style="padding: 12px 14px; background: var(--bg-surface-raised); border: 1px solid var(--border-subtle); border-radius: var(--border-radius-sm); display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: border-color 0.15s;">
+                    <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                      <i class="fa-solid fa-file-lines" style="color: var(--accent-primary); font-size: 15px; flex-shrink: 0;"></i>
+                      <div style="min-width: 0;">
+                        <div style="font-size: 13px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ resume.fileName }}</div>
+                        <div style="font-size: 11px; color: var(--text-tertiary);">{{ resume.createdAt | date:'dd MMM yyyy, h:mm a' }}</div>
+                      </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                      <button
+                        type="button"
+                        (click)="downloadResumeVersion(resume, $event)"
+                        style="background: none; border: none; cursor: pointer; color: var(--accent-primary); padding: 4px 6px; border-radius: 6px; transition: color 0.15s, background 0.15s;"
+                        title="Download this CV version as .txt"
+                      >
+                        <i class="fa-solid fa-download" style="font-size: 13px;"></i>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="deleteResumeVersion(resume._id, $event)"
+                        style="background: none; border: none; cursor: pointer; color: var(--text-tertiary); padding: 4px 6px; border-radius: 6px; transition: color 0.15s, background 0.15s;"
+                        title="Delete this CV version"
+                      >
+                        <i class="fa-solid fa-trash-can" style="font-size: 13px;"></i>
+                      </button>
+                    </div>
                   </div>
                 } @empty {
-                  <p style="font-size: 12px; color: var(--text-tertiary);">No PDF resumes uploaded yet.</p>
+                  <div style="text-align: center; padding: 24px; color: var(--text-tertiary); font-size: 13px; border: 1px dashed var(--border-subtle); border-radius: var(--border-radius-sm);">
+                    <i class="fa-solid fa-inbox" style="font-size: 24px; display: block; margin-bottom: 8px; opacity: 0.5;"></i>
+                    No CV versions saved yet.<br>Paste your CV above to get started.
+                  </div>
                 }
               </div>
             </div>
 
-            <!-- Right Column: Clerk Config -->
-            <div class="glass-panel">
-              <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 15px; font-weight: 600;">Clerk Auth Settings</h3>
-              
-              <div class="form-group">
-                <label for="clerkPem">Clerk PEM Public Key</label>
-                <textarea id="clerkPem" class="form-control" [(ngModel)]="clerkPemPublicKey" placeholder="-----BEGIN PUBLIC KEY-----\n..." rows="8"></textarea>
+            <!-- Right Column: Clerk Profile Manager -->
+            @if (auth.isClerkConfigured()) {
+              <div class="glass-panel" style="padding: 24px; border-radius: 20px;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                  <i class="fa-solid fa-shield-halved" style="color: var(--accent-primary); font-size: 18px;"></i>
+                  <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Manage Profile &amp; Security</h3>
+                </div>
+                <!-- Clerk mount container for User Profile -->
+                <div id="clerk-profile-container" style="min-height: 400px; width: 100%;">
+                  <div style="color: var(--text-secondary); text-align: center; padding: 40px 0;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 12px; color: var(--accent-primary);"></i>
+                    <p style="margin: 0; font-size: 13px;">Loading profile settings...</p>
+                  </div>
+                </div>
               </div>
+            } @else {
+              <div class="glass-panel" style="padding: 24px; border-radius: 20px;">
+                <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 16px; font-weight: 600; color: var(--text-primary);">Account Security</h3>
+                <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">
+                  Your account is managed locally. Authentication security configuration is handled automatically by the server.
+                </p>
+              </div>
+            }
 
-              <button class="btn btn-secondary" (click)="saveClerkConfig()">Save Parameters Locally</button>
-            </div>
           </div>
         }
 
@@ -634,9 +793,44 @@
             <textarea id="jobDescription" class="form-control" [(ngModel)]="newApp.jobDescription" name="jobDescription" rows="3" placeholder="Paste requirements for AI alignment check..."></textarea>
           </div>
 
+
+          <!-- CV PDF Upload -->
+          <div class="form-group">
+            <label>CV Used to Apply <span style="font-weight: 400; color: var(--text-tertiary);">(Optional · PDF only · max 5 MB)</span></label>
+            <label for="cvFileInput" style="
+              display: flex; flex-direction: column; align-items: center; justify-content: center;
+              gap: 8px; padding: 20px 16px;
+              border: 2px dashed var(--border-subtle); border-radius: var(--border-radius-sm);
+              background: var(--bg-surface); cursor: pointer; transition: border-color 0.2s, background 0.2s;
+              text-align: center;
+            ">
+              @if (pendingCvFile) {
+                <i class="fa-solid fa-file-pdf" style="font-size: 22px; color: var(--accent-primary);"></i>
+                <span style="font-size: 13px; font-weight: 500; color: var(--text-primary);">{{ pendingCvFile.name }}</span>
+                <span style="font-size: 11px; color: var(--text-tertiary);">{{ (pendingCvFile.size / 1024).toFixed(0) }} KB · Click to change</span>
+              } @else {
+                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 22px; color: var(--text-tertiary);"></i>
+                <span style="font-size: 13px; color: var(--text-secondary);">Click to upload your CV (PDF)</span>
+                <span style="font-size: 11px; color: var(--text-tertiary);">The CV you used to apply to this role</span>
+              }
+              <input id="cvFileInput" type="file" accept=".pdf,application/pdf" (change)="onCvFileSelected($event)" style="display: none;">
+            </label>
+            @if (cvUploadError) {
+              <p style="margin: 6px 0 0 0; font-size: 12px; color: var(--accent-danger); display: flex; align-items: center; gap: 5px;">
+                <i class="fa-solid fa-circle-xmark"></i> {{ cvUploadError }}
+              </p>
+            }
+          </div>
+
           <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
             <button type="button" class="btn btn-secondary" (click)="closeCreateModal()">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save Application</button>
+            <button type="submit" class="btn btn-primary" [disabled]="cvUploading()">
+              @if (cvUploading()) {
+                <i class="fa-solid fa-spinner fa-spin"></i> Uploading CV...
+              } @else {
+                Save Application
+              }
+            </button>
           </div>
         </form>
       </div>
@@ -667,22 +861,274 @@
             </div>
           </div>
 
-          <!-- AI Fit Score -->
-          @if (selectedApp().fitScore?.score !== null) {
-            <div style="background: var(--bg-surface-raised); border: 1px solid var(--border-subtle); padding: 14px; border-radius: var(--border-radius-sm);">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span style="font-size: 12px; color: var(--text-secondary);">AI Verdict</span>
-                <span class="pill-badge pill-offer num-tabular">{{ selectedApp().fitScore.score }}% &bull; {{ selectedApp().fitScore.verdict }}</span>
-              </div>
-              <p style="font-size: 12px; margin: 0; color: var(--text-secondary); line-height: 1.4;">{{ selectedApp().fitScore.rationale }}</p>
-            </div>
-          }
+          <!-- AI Fit Check Configurator -->
+          <div style="background: var(--bg-surface-raised); border: 1px solid var(--border-subtle); padding: 16px; border-radius: var(--border-radius-lg); margin-top: 8px;">
+            <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; color: var(--text-primary);">
+              <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--accent-primary);"></i>
+              <span>AI Fit Check Configurator</span>
+            </h4>
 
-          <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+            <!-- Plain Text CV Input (only mode) -->
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: block;">Paste CV Plain Text</label>
+              <textarea class="form-control" [(ngModel)]="pastedCvText" rows="5" placeholder="Paste your resume text here..." style="font-size: 12px; background: var(--bg-surface);"></textarea>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; font-size: 12px; height: 32px; display: flex; align-items: center; justify-content: center; gap: 6px;"
+                    [disabled]="runningFitCheck()" (click)="triggerFitCheck(selectedApp()._id)">
+              @if (runningFitCheck()) {
+                <i class="fa-solid fa-spinner fa-spin"></i> Running Fit Check...
+              } @else {
+                <i class="fa-solid fa-bolt"></i> Run AI Fit Check
+              }
+            </button>
+
+            <!-- Previous Score Summary (if exists) -->
+            @if (selectedApp().fitScore?.score !== null && selectedApp().fitScore?.score !== undefined) {
+              <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span class="pill-badge num-tabular"
+                        [class.pill-offer]="selectedApp().fitScore.score >= 75"
+                        [class.pill-interview]="selectedApp().fitScore.score >= 45 && selectedApp().fitScore.score < 75"
+                        [class.pill-rejected]="selectedApp().fitScore.score < 45"
+                        style="font-size: 13px; padding: 4px 12px;">
+                    {{ selectedApp().fitScore.score }}%
+                  </span>
+                  <span style="font-size: 12px; color: var(--text-secondary); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px;">
+                    {{ selectedApp().fitScore.rationale }}
+                  </span>
+                </div>
+                <button class="btn btn-secondary" style="font-size: 11px; padding: 4px 10px; white-space: nowrap; display: flex; align-items: center; gap: 5px;"
+                        (click)="openVerdictPanel()">
+                  <i class="fa-solid fa-chart-bar"></i> Full Report
+                </button>
+              </div>
+
+              <!-- Missing Skills inline chips -->
+              @if (selectedApp().fitScore.missingSkills?.length > 0) {
+                <div style="margin-top: 12px;">
+                  <p style="font-size: 10px; text-transform: uppercase; font-weight: 700; color: var(--text-tertiary); margin: 0 0 8px 0; letter-spacing: 0.06em;">Missing Skills Flagged</p>
+                  <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                    @for (skill of selectedApp().fitScore.missingSkills; track skill) {
+                      <span style="background: rgba(239,68,68,0.12); color: var(--accent-danger); border: 1px solid rgba(239,68,68,0.25); padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 500;">
+                        {{ skill }}
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
+            }
+          </div>
+
+          <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; align-items: center;">
             <button class="btn btn-secondary" style="color: var(--accent-danger); margin-right: auto;" (click)="deleteApplication(selectedApp()._id)">Delete</button>
+            @if (selectedApp().cvPdf?.originalName) {
+              <button class="btn btn-secondary" style="display: flex; align-items: center; gap: 6px;" (click)="downloadAppCv(selectedApp())">
+                <i class="fa-solid fa-file-pdf" style="color: var(--accent-primary);"></i>
+                Download CV
+              </button>
+            }
             <button class="btn btn-secondary" (click)="closeDetailModal()">Close</button>
           </div>
         </div>
+      </div>
+    </div>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════
+       AI VERDICT DEEP-DIVE PANEL
+       Opens on top of / alongside the detail slideover
+  ════════════════════════════════════════════════════════════════ -->
+  @if (isVerdictOpen() && selectedApp()?.fitScore?.score !== null && selectedApp()?.fitScore?.score !== undefined) {
+    <div class="slideover-overlay" (click)="closeVerdictPanel()" style="z-index: 1100;">
+      <div class="verdict-panel" (click)="$event.stopPropagation()">
+
+        <!-- Header -->
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 4px;">
+          <div>
+            <p style="font-size: 11px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.08em; color: var(--accent-primary); margin: 0 0 4px 0;">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> AI Fit Report
+            </p>
+            <h2 style="margin: 0 0 2px 0; font-size: 20px; font-weight: 700;">{{ selectedApp().company }}</h2>
+            <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">{{ selectedApp().role }}</p>
+          </div>
+          <button class="close-btn" (click)="closeVerdictPanel()" style="font-size: 22px;">&times;</button>
+        </div>
+
+        <!-- Score + Verdict Hero -->
+        <div class="verdict-section" style="padding-top: 20px;">
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <div class="verdict-score-ring"
+                 [style.border-color]="getFitScoreColor(selectedApp().fitScore.score)"
+                 [style.box-shadow]="'0 0 20px ' + getFitScoreColor(selectedApp().fitScore.score) + '44'">
+              <span class="num-tabular" style="font-size: 24px; font-weight: 800;"
+                    [style.color]="getFitScoreColor(selectedApp().fitScore.score)">
+                {{ selectedApp().fitScore.score }}
+              </span>
+              <span style="font-size: 10px; color: var(--text-tertiary); font-weight: 600;">/ 100</span>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 7px;">
+                @if (selectedApp().fitScore.score >= 75) {
+                  <i class="fa-solid fa-square-check" style="color: var(--accent-success);"></i>
+                  <span style="color: var(--accent-success);">Strong Match</span>
+                } @else if (selectedApp().fitScore.score >= 45) {
+                  <i class="fa-solid fa-circle-half-stroke" style="color: var(--accent-warning);"></i>
+                  <span style="color: var(--accent-warning);">Partial Match — Needs Work</span>
+                } @else {
+                  <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-danger);"></i>
+                  <span style="color: var(--accent-danger);">Poor Match</span>
+                }
+              </div>
+              <p style="margin: 0; font-size: 12px; color: var(--text-secondary); line-height: 1.6; font-style: italic;">
+                {{ selectedApp().fitScore.rationale }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strength Summary -->
+        @if (selectedApp().fitScore.strengthSummary) {
+          <div class="verdict-section">
+            <h4 class="verdict-section-title">
+              <i class="fa-solid fa-medal" style="color: var(--accent-success);"></i> Your Strengths for This Role
+            </h4>
+            <p style="margin: 0; font-size: 13px; color: var(--text-primary); line-height: 1.7;">
+              {{ selectedApp().fitScore.strengthSummary }}
+            </p>
+          </div>
+        }
+
+        <!-- Matched vs Missing Skills -->
+        <div class="verdict-section">
+          <h4 class="verdict-section-title">
+            <i class="fa-solid fa-code-compare"></i> Skill Alignment
+          </h4>
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            @if (selectedApp().fitScore.matchedSkills?.length > 0) {
+              <div>
+                <p style="font-size: 11px; color: var(--accent-success); font-weight: 600; margin: 0 0 7px 0; text-transform: uppercase; letter-spacing: 0.05em;">
+                  ✓ Matched ({{ selectedApp().fitScore.matchedSkills.length }})
+                </p>
+                <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                  @for (skill of selectedApp().fitScore.matchedSkills; track skill) {
+                    <span class="verdict-chip" style="background: rgba(34,197,94,0.12); color: var(--accent-success); border: 1px solid rgba(34,197,94,0.25);">
+                      {{ skill }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+            @if (selectedApp().fitScore.missingSkills?.length > 0) {
+              <div>
+                <p style="font-size: 11px; color: var(--accent-danger); font-weight: 600; margin: 0 0 7px 0; text-transform: uppercase; letter-spacing: 0.05em;">
+                  ✗ Missing ({{ selectedApp().fitScore.missingSkills.length }})
+                </p>
+                <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                  @for (skill of selectedApp().fitScore.missingSkills; track skill) {
+                    <span class="verdict-chip" style="background: rgba(239,68,68,0.12); color: var(--accent-danger); border: 1px solid rgba(239,68,68,0.25);">
+                      {{ skill }}
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Red Flags -->
+        @if (selectedApp().fitScore.redFlags?.length > 0) {
+          <div class="verdict-section">
+            <h4 class="verdict-section-title">
+              <i class="fa-solid fa-flag" style="color: var(--accent-danger);"></i> Recruiter Red Flags
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              @for (flag of selectedApp().fitScore.redFlags; track flag; let i = $index) {
+                <div class="verdict-tip-card" [attr.data-index]="'#' + (i + 1)"
+                     style="border-left: 3px solid var(--accent-danger);">
+                  {{ flag }}
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- CV Improvements -->
+        @if (selectedApp().fitScore.improvements?.length > 0) {
+          <div class="verdict-section">
+            <h4 class="verdict-section-title">
+              <i class="fa-solid fa-file-pen" style="color: var(--accent-warning);"></i> CV Improvements
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              @for (imp of selectedApp().fitScore.improvements; track imp; let i = $index) {
+                <div class="verdict-tip-card" [attr.data-index]="'#' + (i + 1)">
+                  {{ imp }}
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Concrete Bullet Examples -->
+        @if (selectedApp().fitScore.examples?.length > 0) {
+          <div class="verdict-section">
+            <h4 class="verdict-section-title">
+              <i class="fa-solid fa-pencil" style="color: var(--accent-primary);"></i> Copy-Ready Bullet Points
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              @for (ex of selectedApp().fitScore.examples; track ex) {
+                <div style="font-size: 12px; font-family: 'JetBrains Mono', 'Fira Code', monospace;
+                            padding: 12px 14px; background: var(--bg-surface);
+                            border: 1px solid var(--border-subtle); border-left: 3px solid var(--accent-primary);
+                            border-radius: 8px; color: var(--text-primary); line-height: 1.6;">
+                  {{ ex }}
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Actionable Tips -->
+        @if (selectedApp().fitScore.actionableTips?.length > 0) {
+          <div class="verdict-section">
+            <h4 class="verdict-section-title">
+              <i class="fa-solid fa-bolt" style="color: var(--accent-primary);"></i> Do This Now
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              @for (tip of selectedApp().fitScore.actionableTips; track tip; let i = $index) {
+                <div class="verdict-tip-card" [attr.data-index]="'→ ' + (i + 1)"
+                     style="border-left: 3px solid var(--accent-primary);">
+                  {{ tip }}
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Interview Prep -->
+        @if (selectedApp().fitScore.interviewPrepTips?.length > 0) {
+          <div class="verdict-section">
+            <h4 class="verdict-section-title">
+              <i class="fa-solid fa-comments" style="color: var(--accent-success);"></i> Interview Prep
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              @for (tip of selectedApp().fitScore.interviewPrepTips; track tip; let i = $index) {
+                <div class="verdict-tip-card" [attr.data-index]="'Q' + (i + 1)"
+                     style="border-left: 3px solid var(--accent-success);">
+                  {{ tip }}
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Footer -->
+        <div style="padding-top: 20px; display: flex; justify-content: flex-end;">
+          <button class="btn btn-secondary" (click)="closeVerdictPanel()">
+            <i class="fa-solid fa-arrow-right"></i> Close Report
+          </button>
+        </div>
+
       </div>
     </div>
   }

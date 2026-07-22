@@ -2,7 +2,7 @@
 
 Base URL (local dev): `http://localhost:5000`
 
-All request/response bodies are JSON. No auth headers required in current phases.
+All request/response bodies are JSON. Requests must include the Clerk authentication JWT Bearer token in the `Authorization` header.
 
 ## Phase 1 (current)
 

@@ -42,7 +42,7 @@ This structure represents the project layout. Note that frontend builds compile 
 │       ├── models/
 │       │   ├── Application.js  # Main application schema with statusHistory and fitScore
 │       │   ├── Config.js       # Singlet configuration model for ghost threshold settings
-│       │   └── ResumeVersion.js# Resume versions tracker mapping parsed PDF text and S3 keys
+│       │   └── ResumeVersion.js# Resume versions tracker mapping parsed PDF text in MongoDB
 │       ├── routes/
 │       │   ├── applications.js # CRUD actions, resume uploading, and fit-scoring triggers
 │       │   └── insights.js     # Analytics endpoints utilizing MongoDB pipelines

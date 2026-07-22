@@ -16,13 +16,13 @@ Manually tracking 40–100+ job applications in a spreadsheet doesn't surface:
 - Automatic "ghosting" detection: an application with no status change past a configurable threshold (e.g. 21 days) is flagged as ghosted
 - LLM-based fit score: given a resume and a job description, return a numeric fit score + short rationale
 - Stats dashboard: counts by status, average time-to-response, ghosting rate, fit-score distribution
-- Local-first deployment via Docker Compose (single user, no multi-tenancy)
+- User Authentication: Secure sign-up/login flows powered by Clerk
+- Cloud deployment: Vercel serverless integration for both client and API functions
 
 ## 4. Non-goals (explicitly out of scope)
-- Authentication / multi-user support (Phase 1–5 assume single local user; may revisit later)
 - Browser extension / auto-scraping of job boards
 - Email parsing / inbox integration
-- Production deployment, HTTPS, cloud hosting
+- AWS integration (replaced by Clerk and database text storage)
 - Mobile app
 
 ## 5. Users

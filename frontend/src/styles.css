@@ -296,8 +296,8 @@ body {
   align-items: center;
 }
 
-/* Subdued AWS Status Indicator */
-.aws-config-status {
+/* Subdued Clerk Status Indicator */
+.clerk-status-indicator {
   padding: 6px 12px;
   border-radius: var(--border-radius-pill);
   font-size: 12px;
@@ -306,13 +306,13 @@ body {
   gap: 8px;
 }
 
-.aws-status-mock {
+.clerk-status-mock {
   background: rgba(255, 255, 255, 0.04);
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
 }
 
-.aws-status-mock::before {
+.clerk-status-mock::before {
   content: '';
   width: 6px;
   height: 6px;
@@ -321,13 +321,13 @@ body {
   display: inline-block;
 }
 
-.aws-status-active {
+.clerk-status-active {
   background: rgba(187, 247, 208, 0.08);
   color: var(--accent-success);
   border: 1px solid rgba(187, 247, 208, 0.2);
 }
 
-.aws-status-active::before {
+.clerk-status-active::before {
   content: '';
   width: 6px;
   height: 6px;
@@ -484,32 +484,71 @@ body {
 .pill-rejected  { background: rgba(248, 113, 113, 0.12); color: var(--color-rejected); border: 1px solid rgba(248, 113, 113, 0.2); }
 .pill-ghosted   { background: rgba(148, 163, 184, 0.12); color: var(--color-ghosted);  border: 1px solid rgba(148, 163, 184, 0.2); }
 
-/* Kanban Board */
+/* ==========================================================================
+   Premium Kanban Board Redesign
+   ========================================================================== */
+:root {
+  --color-applied: #64748b;
+  --color-screening: #3b82f6;
+  --color-interview: #f59e0b;
+  --color-offer: #10b981;
+  --color-rejected: #ef4444;
+  --color-ghosted: #a855f7;
+}
+
 .kanban-board {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
-  gap: 16px;
+  gap: 20px;
   overflow-x: auto;
-  padding-bottom: 20px;
+  padding: 16px 8px 24px 8px;
+  background-color: rgba(9, 10, 15, 0.2);
+  border-radius: var(--border-radius-lg);
+  min-height: calc(100vh - 240px);
 }
 
 .kanban-column {
-  background: var(--bg-surface);
+  background: var(--bg-surface-raised);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--border-radius);
-  padding: 16px;
+  border-radius: 20px; /* rounded-xl */
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  min-height: 500px;
+  min-height: 550px;
+  transition: all 0.3s var(--ease-smooth);
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
+
+/* Column Header Gradient Accents */
+.kanban-column::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 20px 20px 0 0;
+}
+
+.kanban-column-applied::before { background: var(--color-applied); }
+.kanban-column-screening::before { background: var(--color-screening); }
+.kanban-column-interview::before { background: var(--color-interview); }
+.kanban-column-offer::before { background: var(--color-offer); }
+.kanban-column-rejected::before { background: var(--color-rejected); }
+.kanban-column-ghosted::before { background: var(--color-ghosted); }
 
 .kanban-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
-  padding-bottom: 10px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--border-subtle);
+  position: sticky;
+  top: 0;
+  background: var(--bg-surface-raised);
+  z-index: 10;
 }
 
 .kanban-title {
@@ -519,14 +558,24 @@ body {
   align-items: center;
   gap: 8px;
   color: var(--text-primary);
+  letter-spacing: 0.3px;
 }
+
+.kanban-column-applied .kanban-title i { color: var(--color-applied); }
+.kanban-column-screening .kanban-title i { color: var(--color-screening); }
+.kanban-column-interview .kanban-title i { color: var(--color-interview); }
+.kanban-column-offer .kanban-title i { color: var(--color-offer); }
+.kanban-column-rejected .kanban-title i { color: var(--color-rejected); }
+.kanban-column-ghosted .kanban-title i { color: var(--color-ghosted); }
 
 .kanban-count {
   font-size: 11px;
-  padding: 2px 7px;
+  font-weight: 600;
+  padding: 2px 8px;
   border-radius: var(--border-radius-pill);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg-surface);
   color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
 }
 
 .kanban-cards {
@@ -534,32 +583,64 @@ body {
   flex-direction: column;
   gap: 12px;
   flex: 1;
+  min-height: 200px;
 }
 
 .kanban-card {
-  background: var(--bg-surface-raised);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--border-radius-sm);
-  padding: 14px;
-  cursor: pointer;
-  transition: border-color var(--transition-fast), transform var(--transition-fast);
+  border-radius: var(--border-radius-lg);
+  padding: 16px;
+  cursor: grab;
+  transition: border-color 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
 }
 
 .kanban-card:hover {
+  transform: translateY(-2px);
   border-color: var(--border-strong);
-  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
+
+.kanban-card-tag-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.kanban-card-tag-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tag-applied { background-color: var(--color-applied); box-shadow: 0 0 6px var(--color-applied); }
+.tag-screening { background-color: var(--color-screening); box-shadow: 0 0 6px var(--color-screening); }
+.tag-interview { background-color: var(--color-interview); box-shadow: 0 0 6px var(--color-interview); }
+.tag-offer { background-color: var(--color-offer); box-shadow: 0 0 6px var(--color-offer); }
+.tag-rejected { background-color: var(--color-rejected); box-shadow: 0 0 6px var(--color-rejected); }
+.tag-ghosted { background-color: var(--color-ghosted); box-shadow: 0 0 6px var(--color-ghosted); }
 
 .kanban-card-company {
   font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 4px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kanban-card-role {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-secondary);
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kanban-card-meta {
@@ -568,6 +649,91 @@ body {
   align-items: center;
   font-size: 11px;
   color: var(--text-tertiary);
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
+  padding-top: 8px;
+}
+
+/* Empty State / Drag Zone Target */
+.kanban-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--border-radius-lg);
+  color: var(--text-tertiary);
+  text-align: center;
+  transition: all 0.25s ease;
+  height: 120px;
+}
+
+.empty-icon-wrapper {
+  background-color: var(--bg-surface);
+  height: 38px;
+  width: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
+  opacity: 0.7;
+  transition: all 0.25s ease;
+}
+
+.kanban-column.cdk-drop-list-dragging .kanban-empty-state {
+  border-color: var(--accent-primary);
+  background-color: rgba(253, 186, 94, 0.05);
+  color: var(--text-primary);
+}
+
+.kanban-column.cdk-drop-list-dragging .empty-icon-wrapper {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.kanban-empty-state span {
+  font-size: 12px;
+}
+
+/* Angular CDK Drag & Drop Utility Styles */
+.cdk-drag-preview {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3) !important;
+  transform: scale(1.03);
+  border-color: var(--accent-primary) !important;
+  opacity: 0.95;
+  cursor: grabbing;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.2;
+  border: 2px dashed var(--accent-primary) !important;
+  background: var(--bg-surface) !important;
+  border-radius: var(--border-radius-lg);
+  min-height: 85px;
+  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cdk-drag-animating {
+  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.kanban-cards.cdk-drop-list-dragging .kanban-card:not(.cdk-drag-placeholder) {
+  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Micro animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
 }
 
 /* Modals & Slide-Over (Liquid Glass) */
@@ -599,6 +765,85 @@ body {
   box-shadow: -8px 0 32px rgba(0, 0, 0, 0.5);
   box-sizing: border-box;
   overflow-y: auto;
+}
+
+/* AI Verdict Deep-Dive Panel */
+.verdict-panel {
+  background: var(--bg-glass-heavy);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border-left: 1px solid var(--border-glass);
+  width: 680px;
+  max-width: 100%;
+  height: 100vh;
+  padding: 36px 32px;
+  box-shadow: -12px 0 48px rgba(0, 0, 0, 0.6);
+  box-sizing: border-box;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.verdict-section {
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 20px 0;
+}
+.verdict-section:last-child { border-bottom: none; }
+
+.verdict-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.verdict-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.verdict-tip-card {
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  position: relative;
+}
+
+.verdict-tip-card::before {
+  content: attr(data-index);
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.verdict-score-ring {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  border: 3px solid;
+  flex-shrink: 0;
 }
 
 .modal-content {
@@ -929,3 +1174,271 @@ body {
   border-color: var(--border-glass);
 }
 
+/* ==========================================================================
+   Clerk Widget Direct Overrides (MEAN Stack Legibility Fixes)
+   ========================================================================== */
+
+/* Target Clerk's root card element to match our design system */
+#clerk-auth-container .cl-card {
+  background-color: var(--bg-surface) !important;
+  border: 1px solid var(--border-glass) !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+  border-radius: 20px !important;
+  padding: 32px 28px !important;
+  width: 100% !important;
+  max-width: 420px !important;
+}
+
+/* Stood-out wrapper container for social buttons (Google, Github, Apple) */
+#clerk-auth-container .cl-socialButtons {
+  background-color: var(--bg-surface-raised) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: 12px !important;
+  padding: 16px !important;
+  margin-bottom: 20px !important;
+}
+
+/* Sized down block button (Google button) */
+#clerk-auth-container .cl-socialButtonsBlockButton {
+  border: 1px solid var(--border-subtle) !important;
+  background-color: var(--bg-base) !important;
+  color: var(--text-primary) !important;
+  border-radius: var(--border-radius-sm) !important;
+  height: 38px !important;
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease !important;
+}
+
+#clerk-auth-container .cl-socialButtonsBlockButton:hover {
+  background-color: var(--bg-surface-raised) !important;
+}
+
+/* Sized down icon buttons (Apple and Github buttons) */
+#clerk-auth-container .cl-socialButtonsIconButton {
+  border: 1px solid var(--border-subtle) !important;
+  background-color: var(--bg-base) !important;
+  color: var(--text-primary) !important;
+  border-radius: var(--border-radius-sm) !important;
+  height: 38px !important;
+  transition: all 0.2s ease !important;
+}
+
+#clerk-auth-container .cl-socialButtonsIconButton:hover {
+  background-color: var(--bg-surface-raised) !important;
+}
+
+/* White icons for Apple and Github in dark mode */
+[data-theme="dark"] #clerk-auth-container .cl-socialButtonsIconButton img,
+[data-theme="dark"] #clerk-auth-container .cl-socialButtonsBlockButton img {
+  filter: invert(1) brightness(2) !important;
+}
+
+/* Safeguard colorful Google logo from inversion filter */
+[data-theme="dark"] #clerk-auth-container .cl-socialButtonsBlockButton[data-provider="google"] img,
+[data-theme="dark"] #clerk-auth-container .cl-socialButtonsIconButton[data-provider="google"] img {
+  filter: none !important;
+}
+
+/* Primary Form Button (Continue button) */
+#clerk-auth-container .cl-formButtonPrimary {
+  color: #111827 !important;
+  background-color: #FDBA5E !important;
+  border-radius: var(--border-radius-sm) !important;
+  height: 38px !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease !important;
+}
+
+#clerk-auth-container .cl-formButtonPrimary:hover {
+  background-color: #EFA541 !important;
+  opacity: 0.95 !important;
+}
+
+/* Text Fields and Inputs */
+#clerk-auth-container .cl-formFieldInput {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-subtle) !important;
+  border-radius: var(--border-radius-sm) !important;
+  height: 38px !important;
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+}
+
+#clerk-auth-container .cl-formFieldInput:focus {
+  border-color: #FDBA5E !important;
+  box-shadow: 0 0 0 1px #FDBA5E !important;
+}
+
+/* Labels & Divider Text */
+#clerk-auth-container .cl-formFieldLabel {
+  color: var(--text-primary) !important;
+  font-weight: 500 !important;
+  font-size: 13px !important;
+}
+
+#clerk-auth-container .cl-dividerText {
+  color: var(--text-secondary) !important;
+  font-size: 12px !important;
+}
+
+#clerk-auth-container .cl-dividerLine {
+  background-color: var(--border-subtle) !important;
+}
+
+/* Link Actions */
+#clerk-auth-container .cl-footerActionText {
+  color: var(--text-secondary) !important;
+  font-size: 13px !important;
+}
+
+#clerk-auth-container .cl-footerActionLink {
+  color: #FDBA5E !important;
+  font-weight: 600 !important;
+  text-decoration: underline !important;
+}
+
+#clerk-auth-container .cl-footerActionLink:hover {
+  color: #EFA541 !important;
+}
+
+/* Clerk branding footer override */
+#clerk-auth-container .cl-internal-b389zp {
+  display: none !important;
+}
+
+/* ==========================================================================
+   File Upload 2 Styles (Premium Drag & Drop Dashboards)
+   ========================================================================== */
+.file-upload-2-card {
+  position: relative;
+  background-color: var(--bg-surface-raised);
+  border: 2px dashed var(--border-subtle);
+  border-radius: var(--border-radius-lg);
+  padding: 32px 20px;
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.2s var(--ease-smooth);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.file-upload-2-card:hover, .file-upload-2-card.dragging {
+  border-color: var(--accent-primary);
+  background-color: var(--bg-glass);
+}
+
+.file-upload-2-pattern {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(-45deg, var(--border-subtle) 0px, var(--border-subtle) 1px, transparent 1px, transparent 10px);
+  opacity: 0.15;
+}
+
+.file-upload-2-icon-wrap {
+  background-color: var(--bg-surface);
+  color: var(--accent-primary);
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-subtle);
+}
+
+.file-upload-2-card:hover .file-upload-2-icon-wrap {
+  transform: translateY(-2px);
+  color: var(--text-primary);
+  background-color: var(--accent-primary);
+}
+
+/* ==========================================================================
+   Clerk UserProfile Overrides (Settings Profile Widget Visibility Fixes)
+   ========================================================================== */
+
+#clerk-profile-container {
+  color: var(--text-primary) !important;
+}
+
+/* Text elements inside UserProfile */
+#clerk-profile-container .cl-headerTitle,
+#clerk-profile-container .cl-headerSubtitle,
+#clerk-profile-container .cl-profileSectionTitleText,
+#clerk-profile-container .cl-profileSectionHeader,
+#clerk-profile-container .cl-formFieldLabel,
+#clerk-profile-container .cl-formFieldInput,
+#clerk-profile-container .cl-navbarButton,
+#clerk-profile-container .cl-userPreviewTextContainer,
+#clerk-profile-container .cl-breadcrumbsItem,
+#clerk-profile-container .cl-profileSectionContent,
+#clerk-profile-container .cl-navbarTitle,
+#clerk-profile-container span,
+#clerk-profile-container h1,
+#clerk-profile-container h2,
+#clerk-profile-container h3,
+#clerk-profile-container h4,
+#clerk-profile-container p,
+#clerk-profile-container label {
+  color: var(--text-primary) !important;
+}
+
+#clerk-profile-container .cl-headerSubtitle,
+#clerk-profile-container .cl-profileSectionSubtitleText,
+#clerk-profile-container .cl-userPreviewSecondaryText,
+#clerk-profile-container .cl-breadcrumbsItemSecondary {
+  color: var(--text-secondary) !important;
+}
+
+/* UserProfile Left Navigation Pane */
+#clerk-profile-container .cl-navbar {
+  background-color: var(--bg-surface-raised) !important;
+  border-right: 1px solid var(--border-subtle) !important;
+}
+
+#clerk-profile-container .cl-navbarButton {
+  transition: all 0.2s ease !important;
+}
+
+#clerk-profile-container .cl-navbarButton:hover {
+  background-color: var(--bg-surface) !important;
+}
+
+#clerk-profile-container .cl-navbarButton[data-active="true"] {
+  background-color: var(--bg-surface) !important;
+  color: #FDBA5E !important;
+}
+
+#clerk-profile-container .cl-profileSection {
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+/* Fix any buttons in UserProfile (Update profile, Add email, etc.) */
+#clerk-profile-container .cl-formButtonPrimary,
+#clerk-profile-container button {
+  color: #111827 !important;
+  background-color: #FDBA5E !important;
+  border-radius: var(--border-radius-sm) !important;
+  font-weight: 600 !important;
+}
+
+#clerk-profile-container button:hover {
+  background-color: #EFA541 !important;
+}
+
+#clerk-profile-container .cl-formButtonReset,
+#clerk-profile-container .cl-formButtonReset:hover {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-surface-raised) !important;
+  border: 1px solid var(--border-subtle) !important;
+}
