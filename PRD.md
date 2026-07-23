@@ -22,7 +22,7 @@ Manually tracking 40–100+ job applications in a spreadsheet doesn't surface:
 ## 4. Non-goals (explicitly out of scope)
 - Browser extension / auto-scraping of job boards
 - Email parsing / inbox integration
-- AWS integration (replaced by Clerk and database text storage)
+- Complex cloud infrastructure (using Vercel, Clerk, and database text storage instead)
 - Mobile app
 
 ## 5. Users

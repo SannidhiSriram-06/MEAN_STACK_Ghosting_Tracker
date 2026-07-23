@@ -17,7 +17,7 @@
 - REST, not GraphQL — keeps the API simple and easy to debug
 
 ## Explicitly NOT using
-- **AWS Cognito or S3** — replaced with Clerk and database-level text caching respectively
+- **Custom Auth or File Storage** — using Clerk for auth and database-level text caching for resumes
 - **SQL / relational DB** — MongoDB fits our document structure
 - **NgRx, Redux, or any global state library** — app state is small enough for component-level state + services
 - **Terraform or IaC** — deploying directly via Vercel Integration
