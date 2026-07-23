@@ -1,7 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const cron = require('node-cron');
 const path = require('path');
 require('dotenv').config();
 
@@ -60,18 +59,6 @@ app.get('/api/cron/ghost-scan', async (req, res) => {
   }
 });
 
-// Daily scheduled cron job (runs every day at midnight '0 0 * * *')
-if (!process.env.VERCEL) {
-  cron.schedule('0 0 * * *', async () => {
-    console.log('Running daily automated ghosting check...');
-    try {
-      const updatedCount = await scanAndFlagGhosted();
-      console.log(`Daily ghosting scan complete. Updated ${updatedCount} applications.`);
-    } catch (error) {
-      console.error('Failed to execute daily ghosting cron job:', error);
-    }
-  });
-}
 
 // Database connection & Server Boot
 mongoose.connect(MONGO_URI)

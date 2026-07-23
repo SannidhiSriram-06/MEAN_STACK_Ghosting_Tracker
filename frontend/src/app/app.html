@@ -39,10 +39,10 @@
           <!-- Title & Subtitle -->
           <div style="text-align: center;">
             <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 600; tracking-tight: -0.025em; color: var(--text-primary);">
-              Create your Account
+              {{ authMode() === 'signup' ? 'Create your Account' : 'Welcome Back' }}
             </h1>
             <p style="margin: 0; font-size: 14px; color: var(--text-secondary);">
-              Let's get started with your 30 days free trial
+              {{ authMode() === 'signup' ? 'Let\'s get started with your 30 days free trial' : 'Sign in to your account' }}
             </p>
           </div>
 

@@ -1,69 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { PdfReader } = require('pdfreader');
 
-/**
- * Fallback raw-buffer PDF text extractor.
- * Handles corrupt/non-standard PDFs that fail XRef parsing by scanning
- * the raw binary for embedded text stream content using regex.
- */
-function extractTextFromRawPDFBuffer(buffer) {
-  try {
-    const raw = buffer.toString('binary');
-    const textChunks = [];
-    
-    // Strategy 1: Extract text from BT...ET blocks (PDF text objects)
-    const btEtRegex = /BT([\s\S]*?)ET/g;
-    let btMatch;
-    while ((btMatch = btEtRegex.exec(raw)) !== null) {
-      const block = btMatch[1];
-      // Extract string literals inside parentheses ()
-      const parenRegex = /\(([^)\\]*(?:\\.[^)\\]*)*)\)/g;
-      let parenMatch;
-      while ((parenMatch = parenRegex.exec(block)) !== null) {
-        const text = parenMatch[1]
-          .replace(/\\n/g, '\n')
-          .replace(/\\r/g, '\r')
-          .replace(/\\t/g, '\t')
-          .replace(/\\\(/g, '(')
-          .replace(/\\\)/g, ')')
-          .replace(/\\\\/g, '\\')
-          .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
-          .trim();
-        if (text && text.length > 1) {
-          textChunks.push(text);
-        }
-      }
-    }
-    
-    // Strategy 2: Extract hex strings <...> commonly used in PDFs
-    if (textChunks.length < 10) {
-      const hexRegex = /<([0-9A-Fa-f\s]{4,})>/g;
-      let hexMatch;
-      while ((hexMatch = hexRegex.exec(raw)) !== null) {
-        const hex = hexMatch[1].replace(/\s/g, '');
-        if (hex.length > 4 && hex.length % 2 === 0) {
-          let decoded = '';
-          for (let i = 0; i < hex.length; i += 2) {
-            const code = parseInt(hex.substr(i, 2), 16);
-            if (code >= 32 && code <= 126) {
-              decoded += String.fromCharCode(code);
-            }
-          }
-          if (decoded.length > 2) {
-            textChunks.push(decoded);
-          }
-        }
-      }
-    }
-    
-    const result = textChunks.join(' ').replace(/\s+/g, ' ').trim();
-    return result;
-  } catch (e) {
-    return '';
-  }
-}
 const Application = require('../models/Application');
 const ResumeVersion = require('../models/ResumeVersion');
 const authMiddleware = require('../middleware/auth');
@@ -276,12 +214,7 @@ const runFitScore = async (req, res) => {
     }
 
     if (!cvText || cvText.trim().length < 10) {
-      // High-quality fallback CV text to ensure the demo/viva runs smoothly even if PDF parsing fails
-      cvText = `Durga Pavan Sriram Sannidhi
-Software Developer | Devops Engineer
-Email: sannidhisriram8@gmail.com
-Technical Skills: JavaScript, TypeScript, Angular, Node.js, Express.js, MongoDB, REST APIs, Git, CI/CD, HTML, CSS, Vercel, Clerk.
-Experience: Software Development Intern. Developed web dashboards using MEAN stack.`;
+      return res.status(400).json({ error: 'Valid CV text is required.' });
     }
 
     const fitScoreResult = await analyzeFit(cvText, app.jobDescription);

@@ -110,6 +110,18 @@ export class App implements OnInit {
   protected cvUploading = signal<boolean>(false);
 
   constructor() {
+    // Intercept Clerk redirects
+    const path = window.location.pathname;
+    if (path === '/sign-in') {
+      this.showLanding.set(false);
+      this.authMode.set('login');
+      window.history.replaceState({}, '', '/');
+    } else if (path === '/sign-up') {
+      this.showLanding.set(false);
+      this.authMode.set('signup');
+      window.history.replaceState({}, '', '/');
+    }
+
     effect(() => {
       if (this.auth.isAuthenticated()) {
         this.loadAllData();
@@ -119,30 +131,24 @@ export class App implements OnInit {
       } else if (this.auth.isClerkConfigured()) {
         // Mount only once when Clerk is ready and container exists
         setTimeout(() => {
-          this.mountClerkSignIn();
+          this.mountClerkAuth(this.authMode());
         }, 200);
       }
     });
   }
 
-  private mountClerkSignIn(retries = 10) {
+  private mountClerkAuth(mode: 'login' | 'signup' = 'login') {
     const Clerk = this.auth.getClerkInstance();
     const container = document.getElementById('clerk-auth-container');
     if (!Clerk || !container) {
-      if (retries > 0) {
-        setTimeout(() => this.mountClerkSignIn(retries - 1), 500);
-      }
-      return;
-    }
-
-    // Check if Clerk is already mounted in this container to prevent duplicate mounts
-    if (container.querySelector('.cl-rootBox')) {
       return;
     }
 
     try {
-      container.innerHTML = ''; // Clear loading spinner
-      Clerk.mountSignIn(container, {
+      // Attempt to clean up before mounting the new one
+      container.innerHTML = '';
+      
+      const config = {
         appearance: {
           elements: {
             card: {
@@ -162,16 +168,15 @@ export class App implements OnInit {
             colorBackground: 'transparent'
           }
         }
-      });
-    } catch (error: any) {
-      if (error.message && error.message.includes('not ready yet') && retries > 0) {
-        console.log(`Clerk components not ready yet, retrying in 100ms... (${retries} retries left)`);
-        setTimeout(() => {
-          this.mountClerkSignIn(retries - 1);
-        }, 100);
+      };
+
+      if (mode === 'signup') {
+        Clerk.mountSignUp(container, config);
       } else {
-        console.error('Failed to mount Clerk Sign In:', error);
+        Clerk.mountSignIn(container, config);
       }
+    } catch (error) {
+      console.error('Failed to mount Clerk Auth:', error);
     }
   }
 
@@ -409,7 +414,7 @@ export class App implements OnInit {
     
     if (this.auth.isClerkConfigured()) {
       setTimeout(() => {
-        this.mountClerkSignIn();
+        this.mountClerkAuth(mode);
       }, 100);
     }
   }
@@ -719,16 +724,10 @@ export class App implements OnInit {
     }, 200);
   }
 
-  private mountClerkUserProfile(retries = 15) {
+  private mountClerkUserProfile() {
     const Clerk = this.auth.getClerkInstance();
     const container = document.getElementById('clerk-profile-container');
-    if (!Clerk || !container) {
-      if (retries > 0) setTimeout(() => this.mountClerkUserProfile(retries - 1), 200);
-      return;
-    }
-
-    // Check if Clerk is already mounted in this container to prevent duplicate mounts
-    if (container.querySelector('.cl-rootBox')) {
+    if (!Clerk || !container || container.querySelector('.cl-rootBox')) {
       return;
     }
 
@@ -752,12 +751,8 @@ export class App implements OnInit {
           }
         }
       });
-    } catch (error: any) {
-      if (retries > 0) {
-        setTimeout(() => this.mountClerkUserProfile(retries - 1), 200);
-      } else {
-        console.error('Failed to mount Clerk user profile:', error);
-      }
+    } catch (error) {
+      console.error('Failed to mount Clerk user profile:', error);
     }
   }
 }

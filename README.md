@@ -6,20 +6,13 @@
 [![Auth](https://img.shields.io/badge/Auth-Clerk-6C47FF.svg)](https://clerk.com)
 [![Deployment](https://img.shields.io/badge/Deployment-Vercel-000000.svg)](https://vercel.com)
 
-**JobTrack** is an enterprise-grade MEAN-stack job search portal designed to automate application tracking, detect recruiter ghosting via daily background cron scans, evaluate resume alignment using LLM-powered Groq fit-checks, authenticate users via Clerk, and deploy serverlessly on Vercel.
+**JobTrack** is an enterprise-grade MEAN-stack job search portal designed to automate application tracking, detect recruiter ghosting via Vercel cron scans, evaluate resume alignment using LLM-powered Groq fit-checks, authenticate users via Clerk, and deploy serverlessly on Vercel.
 
 
 
 ## 🚀 Quick Start (Local Setup)
 
-### Option A: Running with Docker Compose (Recommended)
-```bash
-docker compose up -d --build
-```
-* Access Frontend: [http://localhost:4200](http://localhost:4200)
-* Access Backend API: [http://localhost:5001/health](http://localhost:5001/health)
-
-### Option B: Running Locally (Node 20 + Angular CLI)
+### Running Locally (Node 20 + Angular CLI)
 ```bash
 # 1. Start backend
 cd backend
@@ -44,7 +37,7 @@ npm start
                                 ┌────────────────────────────────┐
                                 │      Express Node 20 API       │
                                 │   - Auth Middleware (Clerk)    │
-                                │   - Ghosting Cron (node-cron)  │
+                                │   - Ghosting Cron (Vercel Cron)    │
                                 │   - AI Scoring (Groq LLaMA)    │
                                 └───────────────┬────────────────┘
                                                 │
@@ -60,7 +53,7 @@ npm start
 ## 🛠️ Tech Stack & Requirements
 * **Frontend**: Angular 21 (Standalone Components, Signals, Vanilla Glassmorphism CSS + Tailwind CSS)
 * **UI/UX**: Custom Milkmaid/Green & Black/Acid Yellow Theme System, Lucide Angular Icons, Animated Landing Page
-* **Backend**: Node.js 20 (Express CommonJS, Mongoose, node-cron, Multer, PDF-Parse)
+* **Backend**: Node.js 20 (Express CommonJS, Mongoose, Multer, PDF-Parse)
 * **AI Engine**: Groq API (`llama-3.3-70b-versatile`) with deterministic fallback
 * **Deployment**: Vercel Serverless Functions
 * **Authentication**: Clerk JWT Verification
