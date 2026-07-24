@@ -6,18 +6,20 @@ const authMiddleware = require('../middleware/auth');
 router.use(authMiddleware);
 
 /**
- * GET /api/stats (and alias GET /api/insights/stats)
+ * GET /api/stats
  * Return aggregate statistics for the user's job search.
+ * This combines all their job applications to show how many they applied to, how many ghosted, etc.
  */
 const getStats = async (req, res) => {
   try {
     const userId = req.user.id;
 
     // 1. Run aggregation pipelines
-    // Status distribution
+    // "Aggregation" is MongoDB's way of grouping data together. Like pivot tables in Excel.
+    // Here we group applications by their 'status' (e.g. how many are 'applied', 'rejected', etc)
     const statusGroups = await Application.aggregate([
-      { $match: { userId } },
-      { $group: { _id: '$status', count: { $sum: 1 } } }
+      { $match: { userId } }, // Only look at this user's data
+      { $group: { _id: '$status', count: { $sum: 1 } } } // Count them up
     ]);
 
     // Source distribution

@@ -1,52 +1,64 @@
+// Import the express library to build our web server routes
 const express = require('express');
+// Create a new router object which will hold all the URLs for our applications
 const router = express.Router();
+// Import multer, a tool to handle file uploads (like PDFs)
 const multer = require('multer');
 
+// Import our database blueprints (Models)
 const Application = require('../models/Application');
 const ResumeVersion = require('../models/ResumeVersion');
+// Import our security checkpoint (Middleware) to make sure users are logged in
 const authMiddleware = require('../middleware/auth');
+// Import our custom functions for ghosting and AI scoring
 const { scanAndFlagGhosted } = require('../services/ghostingService');
 const { analyzeFit } = require('../services/fitCheckService');
 
-// Multer in-memory configuration
+// Configure multer to store uploaded files in the server's temporary RAM memory
+// We limit the size to 5MB so people don't crash our server with massive files
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-// Protect all routes with Clerk auth / mock auth
+// Security gate: This forces ALL URLs in this file to require a valid login token first
 router.use(authMiddleware);
 
 /**
  * GET /api/applications
- * List applications for the authenticated user.
- * Optional query filters: status, sort.
+ * This URL gets a list of all job applications for the person currently logged in.
  */
 router.get('/', async (req, res) => {
   try {
+    // Look at the URL to see if they want to filter by status or sort by date
     const { status, sort } = req.query;
     
-    // Auto-flag ghosted applications (10 days threshold) before fetching
+    // Automatically run our ghosting checker to mark old jobs as "ghosted"
     try {
       await scanAndFlagGhosted(req.user.id, 10);
     } catch (ghostErr) {
       console.error('Auto-ghosting scan failed:', ghostErr);
     }
 
+    // Prepare a search query: We only want applications belonging to THIS user
     const query = { userId: req.user.id };
     
+    // If they clicked a filter button (like "Interviewing"), add it to our search
     if (status) {
       query.status = status;
     }
     
+    // Start searching the database
     let dbQuery = Application.find(query);
     
+    // Sort the results so the newest ones show up first
     if (sort === 'dateApplied') {
       dbQuery = dbQuery.sort({ dateApplied: -1 });
     } else {
       dbQuery = dbQuery.sort({ updatedAt: -1 });
     }
     
+    // Wait for the database to finish searching, then send the list back to the frontend
     const applications = await dbQuery;
     res.json(applications);
   } catch (error) {
@@ -79,29 +91,33 @@ router.get('/:id', async (req, res) => {
 
 /**
  * POST /api/applications
- * Create a new application.
+ * This URL creates a brand new job application in the database.
  */
 router.post('/', async (req, res) => {
   try {
+    // Extract the form data the user typed in on the frontend
     const { company, role, jobDescription, dateApplied, location, source, notes, cvUsed } = req.body;
     
+    // Make sure they filled out the required fields
     if (!company || !role || !dateApplied) {
       return res.status(400).json({ error: 'Company, role, and dateApplied are required fields' });
     }
     
     const now = new Date();
+    // Create a new Application record in the database format
     const newApp = new Application({
-      userId: req.user.id,
+      userId: req.user.id, // Attach it to the logged-in user
       company,
       role,
       jobDescription: jobDescription || '',
       dateApplied: new Date(dateApplied),
-      status: 'applied',
+      status: 'applied', // Default status is "applied"
       lastStatusChange: now,
       location: location || '',
       source: source || '',
       notes: notes || '',
       cvUsed: cvUsed || '',
+      // Start a history log so we can track status changes over time
       statusHistory: [{
         status: 'applied',
         changedAt: now,
@@ -109,6 +125,7 @@ router.post('/', async (req, res) => {
       }]
     });
     
+    // Save it permanently to MongoDB and send it back to the frontend
     const saved = await newApp.save();
     res.status(201).json(saved);
   } catch (error) {

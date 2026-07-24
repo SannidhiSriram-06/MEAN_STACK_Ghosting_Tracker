@@ -4,15 +4,20 @@ import { Observable, from } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { AuthService } from './auth.service';
 
+// @Injectable means this service can be "injected" (used) anywhere in our Angular app
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root' // This makes sure there's only one instance of this service for the whole app
 })
 export class ApiService {
+  // Bring in the HttpClient (Angular's tool for making web requests)
   private readonly http = inject(HttpClient);
+  // Bring in our AuthService to get the user's secure login token
   private readonly auth = inject(AuthService);
   
+  // A helper function to figure out where our backend server is
   private get baseUrl(): string {
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    // If we're testing locally, talk to port 5001. If we're live on Vercel, just use /api
     return isLocalhost ? 'http://localhost:5001/api' : '/api';
   }
 
@@ -29,10 +34,14 @@ export class ApiService {
     );
   }
 
+  // This function fetches all job applications from the backend
+  // 'Observable' is like a Promise that listens for the data to arrive from the internet
   getApplications(status?: string, sort?: string): Observable<any[]> {
     let params = new HttpParams();
-    if (status) params = params.set('status', status);
-    if (sort) params = params.set('sort', sort);
+    if (status) params = params.set('status', status); // e.g. ?status=interview
+    if (sort) params = params.set('sort', sort); // e.g. ?sort=dateApplied
+    
+    // First, grab the secure token headers, THEN make the HTTP GET request
     return this.getRequestOptions(params).pipe(
       switchMap(options => this.http.get<any[]>(`${this.baseUrl}/applications`, options))
     );

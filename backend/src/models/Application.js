@@ -1,5 +1,8 @@
+// Import mongoose, which is the tool we use to talk to MongoDB
 const mongoose = require('mongoose');
 
+// A "Schema" is like a blueprint for our database. It tells MongoDB exactly what data to expect.
+// This small blueprint tracks the history of an application's status (e.g. from 'applied' -> 'interview')
 const statusHistorySchema = new mongoose.Schema({
   status: {
     type: String,
@@ -16,12 +19,15 @@ const statusHistorySchema = new mongoose.Schema({
   }
 }, { _id: false });
 
+// This is the main blueprint for a Job Application
 const applicationSchema = new mongoose.Schema({
+  // Every application must be tied to a specific user so they only see their own data
   userId: {
     type: String,
     required: true,
-    index: true
+    index: true // An index makes searching for this user's apps much faster
   },
+  // The name of the company they applied to
   company: {
     type: String,
     required: true,

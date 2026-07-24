@@ -15,14 +15,23 @@
     <div style="width: 24px; height: 24px; border: 2px solid var(--border-subtle); border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
   </div>
 } @else if (!auth.isAuthenticated()) {
-  @if (showLanding()) {
-    <app-hero-22 
-      (loginClick)="proceedToAuth('login')" 
-      (signupClick)="proceedToAuth('signup')"
-      (primaryCtaClick)="proceedToAuth('signup')"
-      (secondaryCtaClick)="proceedToAuth('login')">
-    </app-hero-22>
-  } @else {
+  <!-- MAIN APPLICATION LAYOUT -->
+  <!-- 
+    We use Tailwind CSS classes here (like 'min-h-screen', 'bg-neutral-900').
+    These are just shortcuts to apply CSS styles without having to write separate CSS files.
+    [class.dark]="theme.currentTheme() === 'dark'" tells Angular to add the 'dark' class if the theme is dark.
+  -->
+  <div [class.dark]="theme.currentTheme() === 'dark'"
+       class="min-h-screen bg-neutral-50 dark:bg-[#080808] text-neutral-900 dark:text-neutral-200 font-sans transition-colors duration-300 relative">
+    
+    <!-- 
+      *ngIf is an Angular "directive" (a special instruction). 
+      It says: ONLY show this <app-hero-22> component IF the 'showLanding()' signal is true.
+    -->
+    <app-hero-22 *ngIf="showLanding()" (getStarted)="proceedToAuth('signup')" (login)="proceedToAuth('login')"></app-hero-22>
+
+    <!-- This is the Main Dashboard that only shows if the Landing Page is hidden -->
+    <ng-container *ngIf="!showLanding()">
     <div style="position: absolute; top: 24px; right: 24px; z-index: 100;">
       <app-theme-toggle></app-theme-toggle>
     </div>
@@ -37,12 +46,18 @@
 
         <div style="width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 32px;">
           <!-- Title & Subtitle -->
-          <div style="text-align: center;">
-            <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 600; tracking-tight: -0.025em; color: var(--text-primary);">
+          <div class="mb-10 text-center relative z-10">
+            <!-- (click) listens for the user clicking the mouse, and triggers our function -->
+            <button (click)="goBackToLanding()" class="mx-auto mb-6 flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#98ff98] to-[#ccff00] text-black shadow-lg shadow-[#ccff00]/20 hover:scale-105 transition-transform duration-300">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </button>
+            
+            <!-- String Interpolation: {{ }} tells Angular to evaluate the variable and put the text here -->
+            <h2 class="text-4xl font-extrabold tracking-tight text-white mb-3 drop-shadow-sm">
               {{ authMode() === 'signup' ? 'Create your Account' : 'Welcome Back' }}
-            </h1>
-            <p style="margin: 0; font-size: 14px; color: var(--text-secondary);">
-              {{ authMode() === 'signup' ? 'Let\'s get started with your 30 days free trial' : 'Sign in to your account' }}
+            </h2>
+            <p class="text-neutral-400">
+              {{ authMode() === 'signup' ? 'Start tracking your applications for free.' : 'Log in to continue your journey.' }}
             </p>
           </div>
 

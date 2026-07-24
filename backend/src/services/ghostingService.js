@@ -4,8 +4,10 @@ const Config = require('../models/Config');
 /**
  * Pure function to check if the status change threshold has been exceeded.
  * Mocks the referenceDate to allow robust unit testing.
+ * Simply put: Did the number of days passed exceed the limit (e.g. 10 days)?
  */
 function isThresholdExceeded(lastStatusChangeDate, thresholdDays, referenceDate = new Date()) {
+  // Math: Subtract the old date from today's date to get milliseconds, then convert to days
   const diffTime = referenceDate.getTime() - new Date(lastStatusChangeDate).getTime();
   const diffDays = diffTime / (1000 * 60 * 60 * 24);
   return diffDays >= thresholdDays;

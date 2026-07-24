@@ -4,11 +4,12 @@ import { Injectable, signal } from '@angular/core';
   providedIn: 'root'
 })
 export class AuthService {
-  // Signals for reactive state
-  readonly isAuthenticated = signal<boolean>(false);
-  readonly isAuthLoading = signal<boolean>(true);
-  readonly currentUser = signal<any>(null);
-  readonly isClerkConfigured = signal<boolean>(false);
+  // --- Signals ---
+  // Signals are variables that automatically tell the website to update if they change
+  readonly isAuthenticated = signal<boolean>(false); // Are they logged in?
+  readonly isAuthLoading = signal<boolean>(true); // Are we still checking if they are logged in?
+  readonly currentUser = signal<any>(null); // Details about the logged-in user
+  readonly isClerkConfigured = signal<boolean>(false); // Did the developer set up Clerk?
   
   private clerkInstance: any = null;
 
@@ -16,19 +17,22 @@ export class AuthService {
     this.checkInitialState();
   }
 
+  // Check if the user is already logged in when they first load the page
   private async checkInitialState() {
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const baseUrl = isLocalhost ? 'http://localhost:5001/api' : '/api';
 
     try {
+      // Try to ask the backend server for our secure Clerk API keys
       const response = await fetch(`${baseUrl}/auth-config`);
       if (response.ok) {
         const config = await response.json();
+        // If the backend has Clerk set up, we save the key and initialize Clerk!
         if (config && config.clerkEnabled && config.publishableKey) {
           this.isClerkConfigured.set(true);
-          localStorage.setItem('clerk_pem_public_key', config.publishableKey);
+          localStorage.setItem('clerk_pem_public_key', config.publishableKey); // Save it to the browser
           await this.initClerk(config.publishableKey);
-          this.isAuthLoading.set(false);
+          this.isAuthLoading.set(false); // We are done loading
           return;
         }
       }

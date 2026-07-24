@@ -1,8 +1,11 @@
+// Import the Groq library to talk to the AI model
 const { Groq } = require('groq-sdk');
 
+// Get the API key from our secret .env file
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 let groqClient = null;
 
+// If we have an API key, set up the AI client
 if (GROQ_API_KEY) {
   try {
     groqClient = new Groq({ apiKey: GROQ_API_KEY });
@@ -11,13 +14,16 @@ if (GROQ_API_KEY) {
     console.error('Failed to initialize Groq Client:', error);
   }
 } else {
+  // If no key is found, tell the user we'll use a basic word-matching system instead
   console.log('GROQ_API_KEY missing from environment variables. Running fit-check in DETERMINISTIC OVERLAP mode.');
 }
 
 /**
  * Normalizes text to extract matching keywords.
+ * This is our "fallback" system if the AI fails. It just checks if the CV has the same tech words as the Job.
  */
 function calculateKeywordOverlap(cvText = '', jdText = '') {
+  // A list of common programming skills to look out for
   const commonTechSkills = [
     'javascript', 'typescript', 'python', 'java', 'c++', 'c#', 'ruby', 'golang', 'rust', 'php',
     'react', 'angular', 'vue', 'nextjs', 'express', 'django', 'spring', 'flask',
@@ -27,21 +33,27 @@ function calculateKeywordOverlap(cvText = '', jdText = '') {
     'rest', 'api', 'microservices', 'scrum', 'agile', 'testing', 'jest', 'mocha', 'cypress'
   ];
 
+  // Convert everything to lowercase so it's easier to match
   const cvLower = cvText.toLowerCase();
   const jdLower = jdText.toLowerCase();
 
-  // Find tech skills mentioned in JD
+  // Find which of those tech skills are actually mentioned in the Job Description
   const jdSkills = commonTechSkills.filter(skill => jdLower.includes(skill));
   if (jdSkills.length === 0) {
+    // If the job doesn't mention any tech skills, just return an average score
     return {
-      score: 50, // Default midpoint if no common keywords are found in JD
+      score: 50, 
       matched: [],
       missing: []
     };
   }
 
+  // Find which job skills are ALSO in the candidate's CV
   const matched = jdSkills.filter(skill => cvLower.includes(skill));
+  // Find which job skills the candidate is MISSING
   const missing = jdSkills.filter(skill => !cvLower.includes(skill));
+  
+  // Calculate the score as a percentage (matched / total * 100)
   const score = Math.round((matched.length / jdSkills.length) * 100);
 
   return {
@@ -52,23 +64,19 @@ function calculateKeywordOverlap(cvText = '', jdText = '') {
 }
 
 /**
- * Maps a numeric score (0-100) to the verdict enum:
- * STRONG_MATCH: 75-100
- * COIN_FLIP: 45-74
- * REACH: 0-44
+ * Maps a numeric score (0-100) to a funny and realistic verdict string.
  */
 function getVerdictFromScore(score) {
-  if (score >= 75) return 'you will get an interview callback-strong fit';
-  if (score >= 45) return '50-50 chances needs cv improvement';
-  return 'why did you even apply bruh 😭';
+  if (score >= 75) return 'you will get an interview callback-strong fit'; // High score
+  if (score >= 45) return '50-50 chances needs cv improvement'; // Medium score
+  return 'why did you even apply bruh 😭'; // Low score
 }
 
 /**
- * Invokes the Groq API to analyze CV vs. JD alignment.
- * Fallback to keyword overlap if Groq fails or is not configured.
+ * The main function that asks the AI to analyze the CV vs Job Description.
  */
 async function analyzeFit(cvText = '', jdText = '', retryCount = 1) {
-  // If CV or JD are empty, return minimum match
+  // If the user forgot to provide the CV or Job Description, return a failing score instantly
   if (!cvText.trim() || !jdText.trim()) {
     return {
       score: 0,
@@ -83,11 +91,12 @@ async function analyzeFit(cvText = '', jdText = '', retryCount = 1) {
     };
   }
 
-  // Calculate deterministic keyword overlap
+  // Calculate the basic keyword score just in case the AI fails or is offline
   const overlapResult = calculateKeywordOverlap(cvText, jdText);
 
-  // If Groq is not configured, return fallback immediately
+  // If we don't have an AI client set up, just return the basic keyword score immediately
   if (!groqClient) {
+    // Suggest the user adds the missing skills to their CV
     const improvements = overlapResult.missing.map(skill => `Add details about your experience working with ${skill} in a production environment.`);
     const examples = overlapResult.missing.map(skill => `E.g. 'Developed and optimized backend modules using ${skill}, improving performance by 25%.'`);
 
@@ -105,6 +114,7 @@ async function analyzeFit(cvText = '', jdText = '', retryCount = 1) {
   }
 
   try {
+    // This is the instructions we give to the AI so it knows how to act
     const systemPrompt = `You are a senior technical recruiter and career coach. Analyze the candidate's CV vs the Job Description deeply.
 Return ONLY a JSON object with this exact schema — no markdown, no prose outside JSON:
 {
@@ -132,27 +142,31 @@ Return ONLY a JSON object with this exact schema — no markdown, no prose outsi
 }
 Be direct, specific, and genuinely helpful. Avoid generic advice. Reference the actual JD requirements and CV content.`;
 
+    // Combine the user's CV and Job Description into one message
     const userPrompt = `### CANDIDATE CV TEXT:\n${cvText}\n\n### JOB DESCRIPTION:\n${jdText}`;
 
+    // Send the message to the Groq AI model and wait for its response
     const completion = await groqClient.chat.completions.create({
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
       ],
       model: 'llama-3.3-70b-versatile',
-      temperature: 0.1,
-      response_format: { type: 'json_object' }
+      temperature: 0.1, // A low temperature means the AI will be more logical and less creative
+      response_format: { type: 'json_object' } // Force the AI to reply in a computer-readable JSON format
     });
 
+    // Get the text the AI replied with
     const responseContent = completion.choices[0].message.content;
     let parsedResult;
     try {
+      // Convert the text into a real JavaScript object
       parsedResult = JSON.parse(responseContent);
     } catch (e) {
       throw new Error('Unable to parse JSON structure from LLM response.');
     }
 
-    // Defensive parsing & validation of required fields
+    // Defensive parsing: Ensure all the required fields exist so the app doesn't crash
     const score = Math.max(0, Math.min(100, Number(parsedResult.score) || 0));
     const rationale = parsedResult.rationale || 'Alignment evaluated successfully.';
     const strengthSummary = parsedResult.strengthSummary || '';
@@ -164,10 +178,11 @@ Be direct, specific, and genuinely helpful. Avoid generic advice. Reference the 
     const actionableTips = Array.isArray(parsedResult.actionableTips) ? parsedResult.actionableTips : [];
     const interviewPrepTips = Array.isArray(parsedResult.interviewPrepTips) ? parsedResult.interviewPrepTips : [];
     
-    // Cross-check: Low confidence if LLM score and keyword score diverge by > 30 points
+    // Cross-check: If the AI score is vastly different from our basic keyword score, flag it as "low confidence"
     const scoreDifference = Math.abs(score - overlapResult.score);
     const lowConfidence = scoreDifference > 30;
 
+    // Return the final packaged result back to the server route
     return {
       score,
       verdict: getVerdictFromScore(score),
@@ -186,14 +201,15 @@ Be direct, specific, and genuinely helpful. Avoid generic advice. Reference the 
 
   } catch (error) {
     console.error(`LLM fitcheck error (Retries left: ${retryCount}):`, error.message);
+    // If the AI fails (like a network error), try again if we have retries left
     if (retryCount > 0) {
       return analyzeFit(cvText, jdText, retryCount - 1);
     }
     
+    // If all retries failed, fall back to our simple keyword matching system
     const improvements = overlapResult.missing.map(skill => `Add details about your experience working with ${skill} in a production environment.`);
     const examples = overlapResult.missing.map(skill => `E.g. 'Developed and optimized backend modules using ${skill}, improving performance by 25%.'`);
 
-    // Hard fallback: return deterministic result
     return {
       score: overlapResult.score,
       verdict: getVerdictFromScore(overlapResult.score),
@@ -208,6 +224,7 @@ Be direct, specific, and genuinely helpful. Avoid generic advice. Reference the 
   }
 }
 
+// Export the functions so other files can use them
 module.exports = {
   calculateKeywordOverlap,
   analyzeFit,

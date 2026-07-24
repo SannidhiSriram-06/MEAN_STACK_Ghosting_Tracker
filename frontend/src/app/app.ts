@@ -1,9 +1,12 @@
+// Import basic Angular building blocks (like Component, signals for state, and effect for reacting to changes)
 import { Component, signal, inject, OnInit, HostListener, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+// Import our custom services that talk to the backend, handle login, and manage the theme
 import { ApiService } from './services/api.service';
 import { AuthService } from './services/auth.service';
 import { ThemeService } from './services/theme.service';
+// Import UI components
 import { ThemeToggleComponent } from './components/theme-toggle/theme-toggle.component';
 import { Hero22Component } from './components/hero-22/hero-22.component';
 
@@ -25,7 +28,8 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
   styleUrl: './app.css'
 })
 export class App implements OnInit {
-  // Services
+  // --- Services ---
+  // inject() is Angular's way of bringing in our custom code so we can use it here
   protected readonly api = inject(ApiService);
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);

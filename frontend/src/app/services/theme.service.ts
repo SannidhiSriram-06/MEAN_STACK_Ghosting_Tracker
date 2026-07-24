@@ -2,10 +2,13 @@ import { Injectable, signal } from '@angular/core';
 
 export type ThemeMode = 'dark' | 'light';
 
+// A Service is like a helper that can be shared across our entire app
 @Injectable({
   providedIn: 'root'
 })
 export class ThemeService {
+  // A "signal" is Angular's way of remembering a value (like 'dark' or 'light')
+  // and instantly updating the screen if this value ever changes.
   currentTheme = signal<ThemeMode>('dark');
 
   constructor() {
@@ -29,11 +32,14 @@ export class ThemeService {
     });
   }
 
+  // This function switches between light and dark mode when the user clicks a button
   toggleTheme(event?: MouseEvent): void {
     const nextTheme: ThemeMode = this.currentTheme() === 'dark' ? 'light' : 'dark';
 
-    // Skiper26 inspired View Transitions API circular ripple effect
+    // The "View Transitions API" is a cool modern browser feature that lets us do smooth animations!
+    // It takes a "screenshot" of the old screen, changes the theme, and then animates to the new screen.
     if (typeof document !== 'undefined' && 'startViewTransition' in document) {
+      // Find exactly where the user clicked their mouse so the animation starts from there
       const x = event?.clientX ?? window.innerWidth / 2;
       const y = event?.clientY ?? window.innerHeight / 2;
       const endRadius = Math.hypot(

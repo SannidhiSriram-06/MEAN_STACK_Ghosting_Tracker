@@ -1,6 +1,9 @@
+// Import jsonwebtoken to read the secure login badges (tokens) users send us
 const jwt = require('jsonwebtoken');
+// Import jwks-rsa to fetch the public "keys" from Clerk to verify the badges are real
 const jwksRsa = require('jwks-rsa');
 
+// Helper function to extract the domain from our Clerk public key
 function getDomainFromPublishableKey(publishableKey) {
   if (!publishableKey || !publishableKey.startsWith('pk_')) return null;
   try {
@@ -44,19 +47,21 @@ function getKey(header, callback) {
 }
 
 const authMiddleware = async (req, res, next) => {
-  // If Clerk is not enabled, fallback to mock auth
+  // If we haven't configured Clerk, use a fake "mock" user so we can still test the app locally
   if (!clerkDomain || !jwksClient) {
     req.user = {
       id: 'mock-user-123',
       email: 'student@example.edu',
       name: 'Viva Candidate'
     };
-    return next();
+    return next(); // Let the user through
   }
 
   try {
+    // Check if the user sent their login token in the headers
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      // If no token, block them!
       return res.status(401).json({ error: 'Authorization header is missing or malformed' });
     }
 
